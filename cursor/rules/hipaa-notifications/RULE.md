@@ -1,7 +1,13 @@
 ---
-name: hipaa-notifications
 description: HIPAA-compliant notification and messaging rules
+globs:
+  - "code/**/app/jobs/**/*.rb"
+  - "code/**/app/mailers/**/*.rb"
+  - "code/**/app/services/**/*notification*.rb"
+  - "code/**/app/services/**/*message*.rb"
+alwaysApply: false
 ---
+
 # HIPAA-Compliant Notifications & Messaging
 
 ## The Golden Rule

@@ -1,7 +1,9 @@
 ---
-name: nova
 description: Nova project workflow rules for AI-assisted development
+globs:
+alwaysApply: true
 ---
+
 # Nova Project Rules
 
 You are working in a Nova project that follows a structured product development workflow from abstract ideas to concrete implementation.

@@ -1,7 +1,12 @@
 ---
-name: hipaa-security
 description: HIPAA security safeguards and authentication requirements
+globs: 
+  - "code/**/app/controllers/**/*.rb"
+  - "code/**/app/models/**/*.rb"
+  - "code/**/config/**/*.rb"
+alwaysApply: false
 ---
+
 # HIPAA Security Safeguards
 
 Implement these required security safeguards for HIPAA compliance.

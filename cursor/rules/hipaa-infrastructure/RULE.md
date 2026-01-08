@@ -1,7 +1,13 @@
 ---
-name: hipaa-infrastructure
 description: HIPAA-compliant infrastructure and hosting requirements for Heroku Shield
+globs:
+  - "code/**/config/**/*.rb"
+  - "code/**/config/**/*.yml"
+  - "code/**/.env*"
+  - "code/**/Procfile*"
+alwaysApply: false
 ---
+
 # HIPAA Infrastructure & Heroku Shield
 
 This application runs on Heroku Private Shield, which provides HIPAA-eligible infrastructure. Follow these rules to maintain compliance.

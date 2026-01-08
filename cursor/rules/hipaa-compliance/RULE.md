@@ -1,7 +1,9 @@
 ---
-name: hipaa-compliance
 description: Core HIPAA compliance rules for healthcare app development
+globs:
+alwaysApply: true
 ---
+
 # HIPAA Compliance Rules
 
 This is a HIPAA-compliant healthcare application. All code must be written with patient privacy and data security as the highest priority. HIPAA compliance must be baked in from the start, not retrofitted later.
