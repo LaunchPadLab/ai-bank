@@ -15,6 +15,9 @@ ai-bank/
 │   └── skills/                  # Domain-specific skills
 ├── cursor/                      # Cursor IDE configuration
 │   └── rules/                   # Context-aware rules with glob patterns
+├── resources/                   # Guides and documentation
+│   ├── documentation/           # AI usage guides
+│   └── mcp/                     # MCP server guides
 └── claude-md-templates/         # Reusable markdown templates
 ```
 
@@ -56,6 +59,15 @@ Context-aware rules for Cursor IDE with glob patterns for automatic activation:
 | `hipaa-notifications` | Notification rules |
 | `hipaa-security` | Security rules |
 | `scope-sentinel` | Contract compliance and scope management |
+
+### Resources (`resources/`)
+
+Guides and documentation for AI tooling:
+
+| Directory | Description |
+|-----------|-------------|
+| `documentation/` | AI usage guidelines and best practices |
+| `mcp/guides/` | MCP server setup and security guides |
 
 ### Templates (`claude-md-templates/`)
 
