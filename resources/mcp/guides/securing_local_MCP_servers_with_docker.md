@@ -1,5 +1,7 @@
 # Securing Local MCP Servers with Docker
 
+https://github.com/MCP-Manager/MCP-Checklists/blob/main/infrastructure/docs/how-to-run-mcp-servers-securely.md
+
 Read this guide to understand why running MCP servers locally creates an abundance of severe security risks, and how you can mitigate those risks with a simple mix of containerization (or sandboxing) and MCP server-network isolation. 
 
 This resource was produced by the team at [MCP Manager](https://mcpmanager.ai/) - the comprehensive security solution for enterprise MCP server use.

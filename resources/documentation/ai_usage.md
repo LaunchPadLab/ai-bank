@@ -265,22 +265,6 @@ For highly sensitive components (authentication, payment processing, proprietary
 
 ---
 
-## Recent Security Incidents to Be Aware Of (2024-2025)
-
-### Critical Vulnerability Exposed Private Repository Secrets
-
-In June 2025, security researchers discovered a critical vulnerability in GitHub Copilot (CVSS 9.6/10) dubbed "CamoLeak." The attack could silently exfiltrate secrets and source code from private repositories. GitHub resolved this by August 2025, but the incident demonstrates that even well-resourced vendors face significant security challenges.
-
-### AI-Generated Code Contains Significant Vulnerabilities
-
-Multiple studies in 2024-2025 found that **25-40% of AI-generated code contains security vulnerabilities**. Critically, research shows developers *believe* AI-assisted code is more secure while it is actually less secure—a dangerous confidence gap. This underscores why code review remains essential.
-
-### Policy Changes Affecting Developers
-
-Anthropic's September 2025 announcement that consumer Claude users must choose whether their data is used for training raised concerns about developers inadvertently consenting on behalf of employers. Ensure developers understand they should opt out when working on client code.
-
----
-
 ## Questions to Ask Your Development Partners
 
 1. Which AI coding tools does your team use, and what privacy settings are enabled?
