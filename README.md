@@ -12,6 +12,7 @@ A centralized repository of AI tooling resources -- skills, agents, rules, Docke
 - [What are Rules?](#what-are-rules)
 - [What are AGENTS.md and CLAUDE.md files?](#what-are-agentsmd-and-claudemd-files)
 - [What is MCP?](#what-is-mcp-model-context-protocol)
+- [Favorite MCPs](#favorite-mcps)
 
 **Tools**
 - [Claude Code](#claude-code)
@@ -194,6 +195,15 @@ The protocol uses JSON-RPC 2.0 and defines three primitives that servers can exp
 - Context window constraints still apply -- fetched data counts against your token budget
 
 **Security note:** Running MCP servers locally without isolation gives them broad access to your machine. See the guide at [`resources/mcp/guides/securing_local_MCP_servers_with_docker.md`](resources/mcp/guides/securing_local_MCP_servers_with_docker.md) for how to sandbox MCP servers with Docker.
+
+### Favorite MCPs
+
+- [`context7`](https://context7.com/)
+- [`firecrawl`](https://docs.firecrawl.dev/mcp-server)
+- [`figma-mcp`](https://help.figma.com/hc/en-us/articles/32132100833559-Guide-to-the-Figma-MCP-server)
+- [`github-mcp`](https://github.com/github/github-mcp-server)
+- [`code graph context`](https://github.com/CodeGraphContext/CodeGraphContext)
+- [`postgresql-mcp`](https://github.com/crystaldba/postgres-mcp)
 
 ---
 
