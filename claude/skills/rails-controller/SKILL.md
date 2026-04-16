@@ -1,19 +1,19 @@
 ---
 name: rails-controller
-description: Creates Rails controllers with TDD approach - request spec first, then implementation. Use when creating new controllers, adding controller actions, implementing CRUD operations, or when user mentions controllers, routes, or API endpoints.
-allowed-tools: Read, Write, Edit, Bash(bundle exec rspec:*), Glob, Grep
+description: Creates Rails controllers with TDD approach - controller test first, then implementation. Use when creating new controllers, adding controller actions, implementing CRUD operations, or when user mentions controllers, routes, or API endpoints.
+allowed-tools: Read, Write, Edit, Bash(bin/rails test:*), Glob, Grep
 ---
 
 # Rails Controller Generator (TDD)
 
-Creates RESTful controllers following project conventions with request specs first.
+Creates RESTful controllers following project conventions with controller tests first.
 
 ## Quick Start
 
-1. Write failing request spec in `spec/requests/`
-2. Run spec to confirm RED
+1. Write failing controller test in `test/controllers/`
+2. Run test to confirm RED
 3. Implement controller action
-4. Run spec to confirm GREEN
+4. Run test to confirm GREEN
 5. Refactor if needed
 
 ## Project Conventions
@@ -27,71 +27,63 @@ This project uses:
 
 ## TDD Workflow
 
-### Step 1: Create Request Spec (RED)
+### Step 1: Create Controller Test (RED)
 
 ```ruby
-# spec/requests/[resources]_spec.rb
-RSpec.describe "[Resources]", type: :request do
-  let(:user) { create(:user) }
-  let(:other_user) { create(:user) }
+# test/controllers/[resources]_controller_test.rb
+require "test_helper"
 
-  before { sign_in user, scope: :user }
+class ResourcesControllerTest < ActionDispatch::IntegrationTest
+  setup do
+    @user = users(:one)
+    @other_user = users(:two)
+    sign_in @user
+  end
 
-  describe "GET /[resources]" do
-    let!(:resource) { create(:[resource], account: user.account) }
-    let!(:other_resource) { create(:[resource], account: other_user.account) }
+  test "GET /resources returns http success" do
+    get resources_path
+    assert_response :success
+  end
 
-    it "returns http success" do
-      get [resources]_path
-      expect(response).to have_http_status(:success)
-    end
+  test "GET /resources shows only current_user's resources (multi-tenant)" do
+    resource = resources(:one)        # belongs to @user.account
+    other_resource = resources(:two)  # belongs to @other_user.account
 
-    it "shows only current_user's resources (multi-tenant)" do
-      get [resources]_path
-      expect(response.body).to include(resource.name)
-      expect(response.body).not_to include(other_resource.name)
+    get resources_path
+
+    assert_includes response.body, resource.name
+    assert_not_includes response.body, other_resource.name
+  end
+
+  test "GET /resources/:id returns http success" do
+    resource = resources(:one)
+    get resource_path(resource)
+    assert_response :success
+  end
+
+  test "POST /resources creates a new resource" do
+    assert_difference("Resource.count", 1) do
+      post resources_path, params: { resource: { name: "New Resource", field1: "value" } }
     end
   end
 
-  describe "GET /[resources]/:id" do
-    let!(:resource) { create(:[resource], account: user.account) }
-
-    it "returns http success" do
-      get [resource]_path(resource)
-      expect(response).to have_http_status(:success)
-    end
+  test "POST /resources assigns to current_account" do
+    post resources_path, params: { resource: { name: "New Resource", field1: "value" } }
+    assert_equal @user.account, Resource.last.account
   end
 
-  describe "POST /[resources]" do
-    let(:valid_params) { { [resource]: attributes_for(:[resource]) } }
-
-    it "creates a new resource" do
-      expect {
-        post [resources]_path, params: valid_params
-      }.to change([Resource], :count).by(1)
-    end
-
-    it "assigns to current_account" do
-      post [resources]_path, params: valid_params
-      expect([Resource].last.account).to eq(user.account)
-    end
-  end
-
-  describe "authorization" do
-    let!(:other_resource) { create(:[resource], account: other_user.account) }
-
-    it "returns 404 for unauthorized access" do
-      get [resource]_path(other_resource)
-      expect(response).to have_http_status(:not_found)
-    end
+  test "GET /resources/:id returns 404 for unauthorized access" do
+    other_resource = resources(:two)  # belongs to @other_user.account
+    get resource_path(other_resource)
+    assert_response :not_found
   end
 end
 ```
 
-### Step 2: Run Spec (Confirm RED)
+### Step 2: Run Test (Confirm RED)
 
 ```bash
-bundle exec rspec spec/requests/[resources]_spec.rb
+bin/rails test test/controllers/resources_controller_test.rb
 ```
 
 ### Step 3: Implement Controller (GREEN)
@@ -160,10 +152,10 @@ class [Resources]Controller < ApplicationController
 end
 ```
 
-### Step 4: Run Spec (Confirm GREEN)
+### Step 4: Run Test (Confirm GREEN)
 
 ```bash
-bundle exec rspec spec/requests/[resources]_spec.rb
+bin/rails test test/controllers/resources_controller_test.rb
 ```
 
 ## Namespaced Controllers
@@ -216,11 +208,15 @@ end
 
 ## Checklist
 
-- [ ] Request spec written first (RED)
+- [ ] Controller test written first (RED)
 - [ ] Multi-tenant isolation tested
 - [ ] Authorization tested (404 for unauthorized)
 - [ ] Controller uses `authorize` on every action
 - [ ] Controller uses `policy_scope` for queries
 - [ ] Presenter wraps models for views
 - [ ] Strong parameters defined
-- [ ] All specs GREEN
+- [ ] All tests GREEN
+
+## Additional Resources
+
+- [domain-patterns.md](reference/domain-patterns.md) – CRUD philosophy, state change controllers, routing patterns, resource thinking, respond_to patterns, and controller concerns

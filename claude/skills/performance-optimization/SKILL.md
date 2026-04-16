@@ -356,31 +356,29 @@ ActiveSupport::Notifications.subscribe("sql.active_record") do |*args|
 end
 ```
 
-## Testing for Performance
+## Testing Performance
 
-### N+1 Detection in Specs
+### N+1 Detection in Tests
 
 ```ruby
-# spec/rails_helper.rb
-RSpec.configure do |config|
-  config.before(:each) do
+# test/test_helper.rb
+class ActiveSupport::TestCase
+  setup do
     Bullet.start_request
   end
 
-  config.after(:each) do
+  teardown do
     Bullet.perform_out_of_channel_notifications if Bullet.notification?
     Bullet.end_request
   end
 end
 
-# spec/requests/events_spec.rb
-RSpec.describe "Events", type: :request do
-  it "loads index without N+1" do
-    create_list(:event, 5, :with_venue, :with_vendors)
+# test/requests/events_test.rb
+require "test_helper"
 
-    expect {
-      get events_path
-    }.not_to raise_error  # Bullet raises on N+1
+class EventsPerformanceTest < ActionDispatch::IntegrationTest
+  test "loads index without N+1" do
+    get events_path
   end
 end
 ```
@@ -388,7 +386,7 @@ end
 ### Query Count Assertions
 
 ```ruby
-# spec/support/query_counter.rb
+# test/support/query_counter.rb
 module QueryCounter
   def count_queries(&block)
     count = 0
@@ -398,19 +396,18 @@ module QueryCounter
   end
 end
 
-RSpec.configure do |config|
-  config.include QueryCounter
-end
+# In test/test_helper.rb:
+# class ActiveSupport::TestCase
+#   include QueryCounter
+# end
 
 # Usage
-it "makes minimal queries" do
-  events = create_list(:event, 5, :with_venue)
-
+test "makes minimal queries" do
   query_count = count_queries do
     Event.with_details.map { |e| e.venue.name }
   end
 
-  expect(query_count).to eq(2)  # events + venues
+  assert_equal 2, query_count
 end
 ```
 

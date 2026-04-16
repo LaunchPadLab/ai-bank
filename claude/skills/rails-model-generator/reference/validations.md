@@ -9,9 +9,13 @@ validates :name, presence: true
 validates :email, presence: { message: "is required" }
 ```
 
-**Spec:**
+**Test:**
 ```ruby
-it { is_expected.to validate_presence_of(:name) }
+test "requires name" do
+  record = ModelName.new(name: nil)
+  assert_not record.valid?
+  assert_includes record.errors[:name], "can't be blank"
+end
 ```
 
 ### Uniqueness
@@ -23,10 +27,20 @@ validates :slug, uniqueness: { scope: :organization_id }
 validates :email, uniqueness: { conditions: -> { where(deleted_at: nil) } }
 ```
 
-**Spec:**
+**Test:**
 ```ruby
-it { is_expected.to validate_uniqueness_of(:email).case_insensitive }
-it { is_expected.to validate_uniqueness_of(:slug).scoped_to(:organization_id) }
+test "requires unique email (case insensitive)" do
+  existing = model_names(:one)
+  record = ModelName.new(email: existing.email.upcase)
+  assert_not record.valid?
+  assert_includes record.errors[:email], "has already been taken"
+end
+
+test "requires unique slug scoped to organization" do
+  existing = model_names(:one)
+  record = ModelName.new(slug: existing.slug, organization: existing.organization)
+  assert_not record.valid?
+end
 ```
 
 ### Length
@@ -38,11 +52,25 @@ validates :pin, length: { is: 4 }
 validates :tags, length: { in: 1..5 }
 ```
 
-**Spec:**
+**Test:**
 ```ruby
-it { is_expected.to validate_length_of(:name).is_at_most(100) }
-it { is_expected.to validate_length_of(:bio).is_at_least(10).is_at_most(500) }
-it { is_expected.to validate_length_of(:pin).is_equal_to(4) }
+test "enforces max length on name" do
+  record = ModelName.new(name: "a" * 101)
+  assert_not record.valid?
+  assert_includes record.errors[:name], "is too long (maximum is 100 characters)"
+end
+
+test "enforces min/max length on bio" do
+  record = ModelName.new(bio: "short")
+  assert_not record.valid?
+  assert_includes record.errors[:bio], "is too short (minimum is 10 characters)"
+end
+
+test "enforces exact length on pin" do
+  record = ModelName.new(pin: "123")
+  assert_not record.valid?
+  assert_includes record.errors[:pin], "is the wrong length (should be 4 characters)"
+end
 ```
 
 ### Format
@@ -53,10 +81,19 @@ validates :phone, format: { with: /\A\+?[\d\s-]+\z/ }
 validates :slug, format: { with: /\A[a-z0-9-]+\z/, message: "only allows lowercase letters, numbers, and hyphens" }
 ```
 
-**Spec:**
+**Test:**
 ```ruby
-it { is_expected.to allow_value('test@example.com').for(:email) }
-it { is_expected.not_to allow_value('invalid-email').for(:email) }
+test "allows valid email format" do
+  record = ModelName.new(email: "test@example.com")
+  record.valid?
+  assert_empty record.errors[:email]
+end
+
+test "rejects invalid email format" do
+  record = ModelName.new(email: "invalid-email")
+  assert_not record.valid?
+  assert_includes record.errors[:email], "is invalid"
+end
 ```
 
 ### Numericality
@@ -67,10 +104,19 @@ validates :price, numericality: { greater_than_or_equal_to: 0 }
 validates :quantity, numericality: { only_integer: true, in: 1..100 }
 ```
 
-**Spec:**
+**Test:**
 ```ruby
-it { is_expected.to validate_numericality_of(:age).only_integer.is_greater_than(0) }
-it { is_expected.to validate_numericality_of(:price).is_greater_than_or_equal_to(0) }
+test "requires age to be a positive integer" do
+  record = ModelName.new(age: -1)
+  assert_not record.valid?
+  assert_includes record.errors[:age], "must be greater than 0"
+end
+
+test "requires price to be non-negative" do
+  record = ModelName.new(price: -0.01)
+  assert_not record.valid?
+  assert_includes record.errors[:price], "must be greater than or equal to 0"
+end
 ```
 
 ### Inclusion/Exclusion
@@ -81,10 +127,19 @@ validates :role, inclusion: { in: :allowed_roles }
 validates :username, exclusion: { in: %w[admin root system] }
 ```
 
-**Spec:**
+**Test:**
 ```ruby
-it { is_expected.to validate_inclusion_of(:status).in_array(%w[draft published archived]) }
-it { is_expected.to validate_exclusion_of(:username).in_array(%w[admin root system]) }
+test "requires status to be a valid value" do
+  record = ModelName.new(status: "invalid")
+  assert_not record.valid?
+  assert_includes record.errors[:status], "is not included in the list"
+end
+
+test "rejects reserved usernames" do
+  record = ModelName.new(username: "admin")
+  assert_not record.valid?
+  assert_includes record.errors[:username], "is reserved"
+end
 ```
 
 ### Acceptance
@@ -111,11 +166,14 @@ validates :company, presence: true, unless: :individual?
 validates :bio, length: { minimum: 50 }, if: -> { featured? }
 ```
 
-**Spec:**
+**Test:**
 ```ruby
-context 'when requires_phone? is true' do
-  before { allow(subject).to receive(:requires_phone?).and_return(true) }
-  it { is_expected.to validate_presence_of(:phone) }
+test "requires phone when requires_phone? is true" do
+  record = ModelName.new(phone: nil)
+  record.stub(:requires_phone?, true) do
+    assert_not record.valid?
+    assert_includes record.errors[:phone], "can't be blank"
+  end
 end
 ```
 
@@ -126,9 +184,13 @@ validates :password, presence: true, on: :create
 validates :reason, presence: true, on: :archive
 ```
 
-**Spec:**
+**Test:**
 ```ruby
-it { is_expected.to validate_presence_of(:password).on(:create) }
+test "requires password on create" do
+  record = ModelName.new(password: nil)
+  assert_not record.valid?(:create)
+  assert_includes record.errors[:password], "can't be blank"
+end
 ```
 
 ## Custom Validations
@@ -152,22 +214,18 @@ class User < ApplicationRecord
 end
 ```
 
-**Spec:**
+**Test:**
 ```ruby
-describe '#email_domain_allowed' do
-  context 'with allowed domain' do
-    subject { build(:user, email: 'test@allowed.com') }
-    it { is_expected.to be_valid }
-  end
+test "allows valid email domain" do
+  user = User.new(email: "test@allowed.com")
+  user.valid?
+  assert_empty user.errors[:email]
+end
 
-  context 'with disallowed domain' do
-    subject { build(:user, email: 'test@blocked.com') }
-    it { is_expected.not_to be_valid }
-    it 'adds error message' do
-      subject.valid?
-      expect(subject.errors[:email]).to include('domain is not allowed')
-    end
-  end
+test "rejects disallowed email domain" do
+  user = User.new(email: "test@blocked.com")
+  assert_not user.valid?
+  assert_includes user.errors[:email], "domain is not allowed"
 end
 ```
 

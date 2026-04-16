@@ -25,7 +25,7 @@ bin/rails generate mailer User welcome password_reset
 # - app/mailers/user_mailer.rb
 # - app/views/user_mailer/welcome.html.erb
 # - app/views/user_mailer/welcome.text.erb
-# - spec/mailers/user_mailer_spec.rb (if using RSpec)
+# - test/mailers/user_mailer_test.rb
 ```
 
 ## Project Structure
@@ -43,9 +43,9 @@ app/
 │       ├── welcome.text.erb
 │       ├── password_reset.html.erb
 │       └── password_reset.text.erb
-spec/
+test/
 ├── mailers/
-│   ├── user_mailer_spec.rb
+│   ├── user_mailer_test.rb
 │   └── previews/
 │       └── user_mailer_preview.rb
 ```
@@ -106,55 +106,65 @@ end
 
 ## Testing Mailers
 
-### Mailer Spec
+### Mailer Test
 
 ```ruby
-# spec/mailers/user_mailer_spec.rb
-require "rails_helper"
+# test/mailers/user_mailer_test.rb
+require "test_helper"
 
-RSpec.describe UserMailer, type: :mailer do
-  describe "#welcome" do
-    let(:user) { create(:user, email_address: "user@example.com", name: "John") }
-    let(:mail) { described_class.welcome(user) }
+class UserMailerTest < ActionMailer::TestCase
+  test "welcome renders the headers" do
+    user = users(:one) # email_address: "user@example.com", name: "John"
+    mail = UserMailer.welcome(user)
 
-    it "renders the headers" do
-      expect(mail.subject).to eq(I18n.t("user_mailer.welcome.subject"))
-      expect(mail.to).to eq(["user@example.com"])
-      expect(mail.from).to eq(["noreply@example.com"])
-    end
-
-    it "renders the HTML body" do
-      expect(mail.html_part.body.to_s).to include("John")
-      expect(mail.html_part.body.to_s).to include("Welcome")
-    end
-
-    it "renders the text body" do
-      expect(mail.text_part.body.to_s).to include("John")
-      expect(mail.text_part.body.to_s).to include("Welcome")
-    end
-
-    it "includes login link" do
-      expect(mail.html_part.body.to_s).to include(new_session_url)
-    end
+    assert_equal [I18n.t("user_mailer.welcome.subject")], [mail.subject]
+    assert_equal ["user@example.com"], mail.to
+    assert_equal ["noreply@example.com"], mail.from
   end
 
-  describe "#password_reset" do
-    let(:user) { create(:user) }
-    let(:token) { "reset-token-123" }
-    let(:mail) { described_class.password_reset(user, token) }
+  test "welcome renders the HTML body" do
+    user = users(:one)
+    mail = UserMailer.welcome(user)
 
-    it "renders the headers" do
-      expect(mail.subject).to eq(I18n.t("user_mailer.password_reset.subject"))
-      expect(mail.to).to eq([user.email_address])
-    end
+    assert_includes mail.html_part.body.to_s, "John"
+    assert_includes mail.html_part.body.to_s, "Welcome"
+  end
 
-    it "includes reset link with token" do
-      expect(mail.html_part.body.to_s).to include(token)
-    end
+  test "welcome renders the text body" do
+    user = users(:one)
+    mail = UserMailer.welcome(user)
 
-    it "expires link information" do
-      expect(mail.html_part.body.to_s).to include("24 hours")
-    end
+    assert_includes mail.text_part.body.to_s, "John"
+    assert_includes mail.text_part.body.to_s, "Welcome"
+  end
+
+  test "welcome includes login link" do
+    user = users(:one)
+    mail = UserMailer.welcome(user)
+
+    assert_includes mail.html_part.body.to_s, new_session_url
+  end
+
+  test "password_reset renders the headers" do
+    user = users(:one)
+    mail = UserMailer.password_reset(user, "reset-token-123")
+
+    assert_equal I18n.t("user_mailer.password_reset.subject"), mail.subject
+    assert_equal [user.email_address], mail.to
+  end
+
+  test "password_reset includes reset link with token" do
+    user = users(:one)
+    mail = UserMailer.password_reset(user, "reset-token-123")
+
+    assert_includes mail.html_part.body.to_s, "reset-token-123"
+  end
+
+  test "password_reset includes expiry information" do
+    user = users(:one)
+    mail = UserMailer.password_reset(user, "reset-token-123")
+
+    assert_includes mail.html_part.body.to_s, "24 hours"
   end
 end
 ```
@@ -162,23 +172,25 @@ end
 ### Testing Delivery
 
 ```ruby
-# spec/services/user_registration_service_spec.rb
-RSpec.describe UserRegistrationService do
-  describe "#call" do
-    it "sends welcome email" do
-      expect {
-        described_class.new.call(user_params)
-      }.to have_enqueued_mail(UserMailer, :welcome)
+# test/services/user_registration_service_test.rb
+require "test_helper"
+
+class UserRegistrationServiceTest < ActiveSupport::TestCase
+  test "sends welcome email" do
+    assert_enqueued_email_with UserMailer, :welcome do
+      UserRegistrationService.new.call(user_params)
     end
   end
 end
 
-# Integration test
-RSpec.describe "User Registration", type: :request do
-  it "sends welcome email after registration" do
-    expect {
+# test/integration/user_registration_test.rb
+require "test_helper"
+
+class UserRegistrationTest < ActionDispatch::IntegrationTest
+  test "sends welcome email after registration" do
+    assert_enqueued_email_with UserMailer, :welcome do
       post registrations_path, params: valid_params
-    }.to have_enqueued_mail(UserMailer, :welcome)
+    end
   end
 end
 ```
@@ -347,16 +359,15 @@ end
 ### Creating Previews
 
 ```ruby
-# spec/mailers/previews/user_mailer_preview.rb
-# OR test/mailers/previews/user_mailer_preview.rb
+# test/mailers/previews/user_mailer_preview.rb
 class UserMailerPreview < ActionMailer::Preview
   def welcome
-    user = User.first || FactoryBot.build(:user, name: "Preview User")
+    user = User.first || User.new(name: "Preview User", email_address: "preview@example.com")
     UserMailer.welcome(user)
   end
 
   def password_reset
-    user = User.first || FactoryBot.build(:user)
+    user = User.first || User.new(email_address: "preview@example.com")
     UserMailer.password_reset(user, "preview-token-123")
   end
 end
@@ -525,7 +536,7 @@ end
 
 ## Checklist
 
-- [ ] Mailer spec written first (RED)
+- [ ] Mailer test written first (RED)
 - [ ] Mailer method created
 - [ ] HTML template created
 - [ ] Text template created
@@ -533,4 +544,8 @@ end
 - [ ] Preview created
 - [ ] Uses `deliver_later` (not `deliver_now`)
 - [ ] Email layout styled
-- [ ] All specs GREEN
+- [ ] All tests GREEN
+
+## Reference
+
+- [Domain Patterns](reference/domain-patterns.md) — Notification digests, email preferences, notification persistence, multi-tenant mail, inline logo attachments, and testing patterns

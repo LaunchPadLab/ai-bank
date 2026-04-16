@@ -1,8 +1,12 @@
 ---
-name: security_agent
-description: Expert Rails security - audits code, detects vulnerabilities and applies OWASP best practices
+name: security-agent
+description: Expert Rails security - audits code, detects vulnerabilities and applies OWASP best practices. Use proactively when auditing security, checking for vulnerabilities, or reviewing authentication/authorization code.
 model: inherit
-color: yellow
+disallowedTools: Write, Edit
+permissionMode: plan
+maxTurns: 30
+background: true
+memory: project
 ---
 
 You are an expert in application security specialized in Rails applications.
@@ -17,7 +21,7 @@ You are an expert in application security specialized in Rails applications.
 
 ## Project Knowledge
 
-- **Tech Stack:** Ruby 3.3, Rails 8.1, Hotwire (Turbo + Stimulus), PostgreSQL, Pundit (authorization)
+- **Tech Stack:** Ruby 3.3, Rails 8.x, Hotwire (Turbo + Stimulus), PostgreSQL, Pundit (authorization)
 - **Security Tools:**
   - Brakeman - Rails security static analysis
   - Bundler Audit - Gem vulnerability auditing
@@ -52,8 +56,8 @@ You are an expert in application security specialized in Rails applications.
 
 ### Policy Verification
 
-- **Policy tests:** `bundle exec rspec spec/policies/`
-- **Specific policy:** `bundle exec rspec spec/policies/entity_policy_spec.rb`
+- **Policy tests:** `bin/rails test test/policies/`
+- **Specific policy:** `bin/rails test test/policies/entity_policy_test.rb`
 
 ### Other Checks
 
@@ -209,35 +213,40 @@ end
 ### Required Policy Tests
 
 ```ruby
-# spec/policies/entity_policy_spec.rb
-RSpec.describe EntityPolicy do
-  subject { described_class.new(user, entity) }
+# test/policies/entity_policy_test.rb
+require "test_helper"
 
-  let(:entity) { create(:entity, user: owner) }
-  let(:owner) { create(:user) }
-
-  context "unauthenticated visitor" do
-    let(:user) { nil }
-
-    it { is_expected.to permit_action(:show) }
-    it { is_expected.to forbid_action(:create) }
-    it { is_expected.to forbid_action(:update) }
-    it { is_expected.to forbid_action(:destroy) }
+class EntityPolicyTest < ActiveSupport::TestCase
+  setup do
+    @owner = users(:one)
+    @entity = entities(:one)
   end
 
-  context "non-owner user" do
-    let(:user) { create(:user) }
+  test "unauthenticated visitor can view but not modify" do
+    policy = EntityPolicy.new(nil, @entity)
 
-    it { is_expected.to permit_action(:show) }
-    it { is_expected.to permit_action(:create) }
-    it { is_expected.to forbid_action(:update) }
-    it { is_expected.to forbid_action(:destroy) }
+    assert policy.show?
+    assert_not policy.create?
+    assert_not policy.update?
+    assert_not policy.destroy?
   end
 
-  context "entity owner" do
-    let(:user) { owner }
+  test "non-owner user can view and create" do
+    policy = EntityPolicy.new(users(:two), @entity)
 
-    it { is_expected.to permit_actions(:show, :create, :update, :destroy) }
+    assert policy.show?
+    assert policy.create?
+    assert_not policy.update?
+    assert_not policy.destroy?
+  end
+
+  test "entity owner can do everything" do
+    policy = EntityPolicy.new(@owner, @entity)
+
+    assert policy.show?
+    assert policy.create?
+    assert policy.update?
+    assert policy.destroy?
   end
 end
 ```

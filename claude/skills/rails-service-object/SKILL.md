@@ -76,69 +76,64 @@ Failure:
 - Sends confirmation email (async)
 ```
 
-## Step 2: Service Spec
+## Step 2: Service Test
 
-Location: `spec/services/orders/create_service_spec.rb`
+Location: `test/services/orders/create_service_test.rb`
 
 ```ruby
 # frozen_string_literal: true
 
-require 'rails_helper'
+require "test_helper"
 
-RSpec.describe Orders::CreateService do
-  subject(:service) { described_class.new(dependencies) }
+class Orders::CreateServiceTest < ActiveSupport::TestCase
+  setup do
+    @user = users(:one)
+    @product = products(:one) # inventory_count: 10
+    @items = [{ product_id: @product.id, quantity: 2 }]
+    @service = Orders::CreateService.new
+  end
 
-  let(:dependencies) { {} }
-  let(:user) { create(:user) }
-  let(:product) { create(:product, inventory_count: 10) }
-  let(:items) { [{ product_id: product.id, quantity: 2 }] }
+  test "returns success with valid inputs" do
+    result = @service.call(user: @user, items: @items)
+    assert_predicate result, :success?
+  end
 
-  describe '#call' do
-    subject(:result) { service.call(user: user, items: items) }
-
-    context 'with valid inputs' do
-      it 'returns success' do
-        expect(result).to be_success
-      end
-
-      it 'creates an order' do
-        expect { result }.to change(Order, :count).by(1)
-      end
-
-      it 'returns the order' do
-        expect(result.data).to be_a(Order)
-        expect(result.data.user).to eq(user)
-      end
+  test "creates an order with valid inputs" do
+    assert_difference("Order.count", 1) do
+      @service.call(user: @user, items: @items)
     end
+  end
 
-    context 'with empty items' do
-      let(:items) { [] }
+  test "returns the order with valid inputs" do
+    result = @service.call(user: @user, items: @items)
+    assert_kind_of Order, result.data
+    assert_equal @user, result.data.user
+  end
 
-      it 'returns failure' do
-        expect(result).to be_failure
-      end
+  test "returns failure with empty items" do
+    result = @service.call(user: @user, items: [])
+    assert_predicate result, :failure?
+  end
 
-      it 'returns error message' do
-        expect(result.error).to eq('No items provided')
-      end
-    end
+  test "returns error message with empty items" do
+    result = @service.call(user: @user, items: [])
+    assert_equal "No items provided", result.error
+  end
 
-    context 'with insufficient inventory' do
-      let(:items) { [{ product_id: product.id, quantity: 100 }] }
+  test "returns failure with insufficient inventory" do
+    items = [{ product_id: @product.id, quantity: 100 }]
+    result = @service.call(user: @user, items: items)
+    assert_predicate result, :failure?
+  end
 
-      it 'returns failure' do
-        expect(result).to be_failure
-      end
-
-      it 'does not create order' do
-        expect { result }.not_to change(Order, :count)
-      end
+  test "does not create order with insufficient inventory" do
+    items = [{ product_id: @product.id, quantity: 100 }]
+    assert_no_difference("Order.count") do
+      @service.call(user: @user, items: items)
     end
   end
 end
 ```
-
-See [templates/service_spec.erb](templates/service_spec.erb) for full template.
 
 ## Step 3-6: Implement Service
 
@@ -288,18 +283,25 @@ end
 ## Testing with Mocked Dependencies
 
 ```ruby
-RSpec.describe Orders::CreateService do
-  let(:inventory_service) { instance_double(InventoryService) }
-  let(:payment_gateway) { instance_double(PaymentGateway) }
-  let(:service) { described_class.new(inventory_service: inventory_service, payment_gateway: payment_gateway) }
-
-  before do
-    allow(inventory_service).to receive(:available?).and_return(true)
-    allow(inventory_service).to receive(:decrement)
-    allow(payment_gateway).to receive(:charge)
+class Orders::CreateServiceWithMocksTest < ActiveSupport::TestCase
+  setup do
+    @inventory_service = Minitest::Mock.new
+    @payment_gateway = Minitest::Mock.new
+    @service = Orders::CreateService.new(
+      inventory_service: @inventory_service,
+      payment_gateway: @payment_gateway
+    )
   end
 
-  # Tests...
+  test "calls inventory and payment services" do
+    @inventory_service.expect :available?, true, [Integer, Integer]
+    @inventory_service.expect :decrement, true, [Integer, Integer]
+    @payment_gateway.expect :charge, true, [Hash]
+
+    # ... exercise and verify ...
+    @inventory_service.verify
+    @payment_gateway.verify
+  end
 end
 ```
 
@@ -337,3 +339,7 @@ app/services/
 3. **No return contract**: Returning different types
 4. **Raising exceptions**: Use Result objects instead
 5. **Business logic in controller**: Extract to service
+
+## Additional Resources
+
+- [Domain Patterns](reference/domain-patterns.md) — ApplicationService base class with Data.define Result, CRUD/transaction/calculation/dependency-injection service patterns, side effect testing, and controller integration

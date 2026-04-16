@@ -189,7 +189,7 @@ end
 ### Stub Current in Tests
 
 ```ruby
-# spec/support/current_helpers.rb
+# test/support/current_helpers.rb
 module CurrentHelpers
   def with_current_user(user)
     session = user.sessions.create!
@@ -200,39 +200,47 @@ module CurrentHelpers
   end
 end
 
-RSpec.configure do |config|
-  config.include CurrentHelpers
-end
+# In test/test_helper.rb:
+# class ActiveSupport::TestCase
+#   include CurrentHelpers
+# end
 ```
 
-### In Specs
+### In Tests
 
 ```ruby
-RSpec.describe Post, type: :model do
-  let(:user) { create(:user) }
+# test/models/post_test.rb
+require "test_helper"
 
-  describe 'auto-assignment of author' do
-    it 'sets author from Current.user' do
-      with_current_user(user) do
-        post = Post.create!(title: "Test")
-        expect(post.user).to eq(user)
-      end
+class PostTest < ActiveSupport::TestCase
+  setup do
+    @user = users(:one)
+  end
+
+  test "sets author from Current.user" do
+    with_current_user(@user) do
+      post = Post.create!(title: "Test")
+      assert_equal @user, post.user
     end
   end
 end
 ```
 
-### Request Specs
+### Request Tests
 
 ```ruby
-RSpec.describe "Posts", type: :request do
-  let(:user) { create(:user) }
+# test/requests/posts_test.rb
+require "test_helper"
 
-  before { sign_in(user) }  # Sets Current.session
+class PostsRequestTest < ActionDispatch::IntegrationTest
+  setup do
+    @user = users(:one)
+    sign_in(@user)
+  end
 
-  it 'uses current user' do
+  test "uses current user" do
     post posts_path, params: { post: { title: "Test" } }
-    expect(Post.last.user).to eq(user)
+    assert_equal @user, Post.last.user
   end
 end
 ```

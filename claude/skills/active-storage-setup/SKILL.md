@@ -98,7 +98,7 @@ end
 ```
 Active Storage Progress:
 - [ ] Step 1: Add attachment to model
-- [ ] Step 2: Write model spec for attachment
+- [ ] Step 2: Write model test for attachment
 - [ ] Step 3: Add validations (type, size)
 - [ ] Step 4: Create upload form
 - [ ] Step 5: Handle in controller
@@ -108,79 +108,72 @@ Active Storage Progress:
 
 ## Testing Attachments
 
-### Model Spec
+### Model Test
 
 ```ruby
-# spec/models/user_spec.rb
-require 'rails_helper'
+# test/models/user_test.rb
+require "test_helper"
 
-RSpec.describe User, type: :model do
-  describe "avatar attachment" do
-    let(:user) { create(:user) }
+class UserTest < ActiveSupport::TestCase
+  test "attaches an avatar" do
+    user = users(:one)
+    user.avatar.attach(
+      io: File.open(Rails.root.join("test/fixtures/files/avatar.jpg")),
+      filename: "avatar.jpg",
+      content_type: "image/jpeg"
+    )
 
-    it "attaches an avatar" do
-      user.avatar.attach(
-        io: File.open(Rails.root.join("spec/fixtures/files/avatar.jpg")),
-        filename: "avatar.jpg",
-        content_type: "image/jpeg"
-      )
+    assert user.avatar.attached?
+  end
 
-      expect(user.avatar).to be_attached
-    end
+  test "generates variants" do
+    user = users(:one)
+    user.avatar.attach(
+      io: File.open(Rails.root.join("test/fixtures/files/avatar.jpg")),
+      filename: "avatar.jpg",
+      content_type: "image/jpeg"
+    )
 
-    it "generates variants" do
-      user.avatar.attach(
-        io: File.open(Rails.root.join("spec/fixtures/files/avatar.jpg")),
-        filename: "avatar.jpg",
-        content_type: "image/jpeg"
-      )
-
-      expect(user.avatar.variant(:thumb)).to be_present
-    end
+    assert user.avatar.variant(:thumb).present?
   end
 end
 ```
 
-### Factory with Attachments
+### Fixtures with Attachments
 
 ```ruby
-# spec/factories/users.rb
-FactoryBot.define do
-  factory :user do
-    name { Faker::Name.name }
+# test/fixtures/users.yml
+one:
+  name: Alice
+  email_address: alice@example.com
 
-    trait :with_avatar do
-      after(:build) do |user|
-        user.avatar.attach(
-          io: File.open(Rails.root.join("spec/fixtures/files/avatar.jpg")),
-          filename: "avatar.jpg",
-          content_type: "image/jpeg"
-        )
-      end
-    end
-  end
-end
+with_avatar:
+  name: Bob
+  email_address: bob@example.com
 
-# Usage
-create(:user, :with_avatar)
+# Attach files in test setup:
+# user = users(:one)
+# user.avatar.attach(io: File.open(...), filename: "avatar.jpg", content_type: "image/jpeg")
 ```
 
-### Request Spec
+### Integration Test
 
 ```ruby
-# spec/requests/users_spec.rb
-RSpec.describe "Users", type: :request do
-  describe "PATCH /users/:id" do
-    let(:user) { create(:user) }
-    let(:avatar) { fixture_file_upload("avatar.jpg", "image/jpeg") }
+# test/integration/users_test.rb
+require "test_helper"
 
-    before { sign_in user }
+class UsersTest < ActionDispatch::IntegrationTest
+  setup do
+    @user = users(:one)
+    sign_in @user
+  end
 
-    it "uploads avatar" do
-      patch user_path(user), params: { user: { avatar: avatar } }
+  test "uploads avatar" do
+    avatar = fixture_file_upload("avatar.jpg", "image/jpeg")
 
-      expect(user.reload.avatar).to be_attached
-    end
+    patch user_path(@user), params: { user: { avatar: avatar } }
+
+    assert @user.reload.avatar.attached?
   end
 end
 ```

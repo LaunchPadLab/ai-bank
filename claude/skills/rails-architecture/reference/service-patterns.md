@@ -173,15 +173,25 @@ end
 ### Testing with Mocks
 
 ```ruby
-RSpec.describe Orders::CreateService do
-  let(:inventory) { instance_double(InventoryService, available?: true, reserve: true) }
-  let(:payment) { instance_double(PaymentService, charge: true) }
-  let(:service) { described_class.new(inventory: inventory, payment: payment) }
+# test/services/orders/create_service_test.rb
+require "test_helper"
 
-  it "checks inventory before charging" do
-    service.call(user: user, items: items)
-    expect(inventory).to have_received(:available?).ordered
-    expect(payment).to have_received(:charge).ordered
+class Orders::CreateServiceTest < ActiveSupport::TestCase
+  setup do
+    @inventory = Minitest::Mock.new
+    @payment = Minitest::Mock.new
+    @service = Orders::CreateService.new(inventory: @inventory, payment: @payment)
+    @user = users(:one)
+  end
+
+  test "checks inventory before charging" do
+    @inventory.expect :available?, true, [Array]
+    @payment.expect :charge, true, [Hash]
+
+    @service.call(user: @user, items: [{ product_id: 1, quantity: 2 }])
+
+    @inventory.verify
+    @payment.verify
   end
 end
 ```

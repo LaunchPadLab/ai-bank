@@ -421,15 +421,17 @@ bin/rails db:migrate:status
 ### Schema Check
 
 ```ruby
-# spec/db/schema_spec.rb
-RSpec.describe "Database Schema" do
-  it "has all foreign keys indexed" do
+# test/models/schema_test.rb
+require "test_helper"
+
+class SchemaTest < ActiveSupport::TestCase
+  test "all foreign keys are indexed" do
     foreign_keys = ActiveRecord::Base.connection.foreign_keys(:events)
     indexes = ActiveRecord::Base.connection.indexes(:events)
 
     foreign_keys.each do |fk|
       indexed = indexes.any? { |idx| idx.columns.first == fk.column }
-      expect(indexed).to be(true), "Missing index for #{fk.column}"
+      assert indexed, "Missing index for #{fk.column}"
     end
   end
 end
@@ -470,3 +472,7 @@ end
 - [ ] Tested rollback locally
 - [ ] strong_migrations gem checks pass
 - [ ] No table locks during deploy
+
+## Reference
+
+- [Domain Patterns](reference/domain-patterns.md) — 10 migration patterns, index strategies, data types, null constraints, safety patterns, naming conventions

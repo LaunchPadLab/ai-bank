@@ -1,7 +1,7 @@
 ---
 name: rails-presenter
 description: Creates presenter objects for view formatting using SimpleDelegator pattern with TDD. Use when extracting view logic from models, formatting data for display, creating badges/labels, or when user mentions presenters, view models, formatting, or display helpers.
-allowed-tools: Read, Write, Edit, Bash(bundle exec rspec:*), Glob, Grep
+allowed-tools: Read, Write, Edit, Bash(bin/rails test:*), Glob, Grep
 ---
 
 # Rails Presenter Generator (TDD)
@@ -10,10 +10,10 @@ Creates presenters that wrap models for view-specific formatting with specs firs
 
 ## Quick Start
 
-1. Write failing spec in `spec/presenters/`
-2. Run spec to confirm RED
+1. Write failing test in `test/presenters/`
+2. Run test to confirm RED
 3. Implement presenter extending `BasePresenter`
-4. Run spec to confirm GREEN
+4. Run test to confirm GREEN
 
 ## Project Conventions
 
@@ -50,89 +50,79 @@ end
 
 ## TDD Workflow
 
-### Step 1: Create Presenter Spec (RED)
+### Step 1: Create Presenter Test (RED)
 
 ```ruby
-# spec/presenters/[resource]_presenter_spec.rb
-RSpec.describe [Resource]Presenter do
-  let(:resource) { create(:resource, name: "Test", status: :active) }
-  let(:presenter) { described_class.new(resource) }
+# test/presenters/[resource]_presenter_test.rb
+require "test_helper"
 
-  describe "delegation" do
-    it "delegates to the model" do
-      expect(presenter.name).to eq("Test")
-    end
+class [Resource]PresenterTest < ActiveSupport::TestCase
+  setup do
+    @resource = resources(:one) # name: "Test", status: :active
+    @presenter = [Resource]Presenter.new(@resource)
+  end
 
-    it "responds to model methods" do
-      expect(presenter).to respond_to(:name, :status, :created_at)
-    end
+  test "delegates to the model" do
+    assert_equal "Test", @presenter.name
+  end
 
-    it "exposes the underlying model" do
-      expect(presenter.model).to eq(resource)
+  test "responds to model methods" do
+    assert_respond_to @presenter, :name
+    assert_respond_to @presenter, :status
+    assert_respond_to @presenter, :created_at
+  end
+
+  test "exposes the underlying model" do
+    assert_equal @resource, @presenter.model
+  end
+
+  test "returns the formatted name" do
+    assert_equal "Test", @presenter.display_name
+  end
+
+  test "returns formatted date when present" do
+    @resource.update(event_date: Date.new(2026, 7, 15))
+    I18n.with_locale(:fr) do
+      assert_includes @presenter.formatted_date, "2026"
     end
   end
 
-  describe "#display_name" do
-    it "returns the formatted name" do
-      expect(presenter.display_name).to eq("Test")
-    end
+  test "returns placeholder span when date is nil" do
+    @resource.update(event_date: nil)
+    result = @presenter.formatted_date
+    assert_includes result, "text-slate-400"
+    assert_includes result, "italic"
   end
 
-  describe "#formatted_date" do
-    context "when date is present" do
-      before { resource.update(event_date: Date.new(2026, 7, 15)) }
-
-      it "returns formatted date in French" do
-        I18n.with_locale(:fr) do
-          expect(presenter.formatted_date).to include("2026")
-        end
-      end
-    end
-
-    context "when date is nil" do
-      before { resource.update(event_date: nil) }
-
-      it "returns placeholder span" do
-        result = presenter.formatted_date
-        expect(result).to include("text-slate-400")
-        expect(result).to include("italic")
-      end
-    end
+  test "status badge returns HTML-safe string" do
+    assert_predicate @presenter.status_badge, :html_safe?
   end
 
-  describe "#status_badge" do
-    it "returns HTML-safe string" do
-      expect(presenter.status_badge).to be_html_safe
-    end
-
-    it "includes status text" do
-      expect(presenter.status_badge).to include("Active")
-    end
-
-    it "uses correct color classes for active" do
-      resource.update(status: :active)
-      expect(presenter.status_badge).to include("bg-green-100")
-    end
-
-    it "uses correct color classes for inactive" do
-      resource.update(status: :inactive)
-      expect(presenter.status_badge).to include("bg-red-100")
-    end
+  test "status badge includes status text" do
+    assert_includes @presenter.status_badge, "Active"
   end
 
-  describe "#formatted_currency" do
-    it "formats cents as euros" do
-      resource.update(amount_cents: 15000)
-      expect(presenter.formatted_amount).to eq("150,00 EUR")
-    end
+  test "uses correct color classes for active" do
+    @resource.update(status: :active)
+    assert_includes @presenter.status_badge, "bg-green-100"
+  end
+
+  test "uses correct color classes for inactive" do
+    @resource.update(status: :inactive)
+    assert_includes @presenter.status_badge, "bg-red-100"
+  end
+
+  test "formats cents as euros" do
+    @resource.update(amount_cents: 15000)
+    assert_equal "150,00 EUR", @presenter.formatted_amount
   end
 end
 ```
 
-### Step 2: Run Spec (Confirm RED)
+### Step 2: Run Test (Confirm RED)
 
 ```bash
-bundle exec rspec spec/presenters/[resource]_presenter_spec.rb
+bin/rails test test/presenters/[resource]_presenter_test.rb
 ```
 
 ### Step 3: Implement Presenter (GREEN)
@@ -195,10 +185,10 @@ class [Resource]Presenter < BasePresenter
 end
 ```
 
-### Step 4: Run Spec (Confirm GREEN)
+### Step 4: Run Test (Confirm GREEN)
 
 ```bash
-bundle exec rspec spec/presenters/[resource]_presenter_spec.rb
+bin/rails test test/presenters/[resource]_presenter_test.rb
 ```
 
 ## Common Presenter Methods
@@ -293,7 +283,7 @@ end
 
 ## Checklist
 
-- [ ] Spec written first (RED)
+- [ ] Test written first (RED)
 - [ ] Extends `BasePresenter`
 - [ ] Delegation tested
 - [ ] HTML output is `html_safe`
@@ -301,4 +291,8 @@ end
 - [ ] Currency stored in cents, displayed in euros
 - [ ] Color mappings use constants (Open/Closed)
 - [ ] `not_specified_span` for nil values
-- [ ] All specs GREEN
+- [ ] All tests GREEN
+
+## Additional Resources
+
+- [Domain Patterns](reference/domain-patterns.md) — SimpleDelegator pattern, ApplicationPresenter base class, view context usage, number formatting, collection presenters, conditional logic, and testing strategies

@@ -52,9 +52,9 @@ app/
 │       ├── base_form.rb
 │       ├── step_one_form.rb
 │       └── step_two_form.rb
-spec/forms/
-├── registration_form_spec.rb
-└── search_form_spec.rb
+test/forms/
+├── registration_form_test.rb
+└── search_form_test.rb
 ```
 
 ## Base Form Class
@@ -94,95 +94,99 @@ end
 
 ## Pattern 1: Multi-Model Registration Form
 
-### Spec First (RED)
+### Test First (RED)
 
 ```ruby
-# spec/forms/registration_form_spec.rb
-require 'rails_helper'
+# test/forms/registration_form_test.rb
+require "test_helper"
 
-RSpec.describe RegistrationForm do
-  describe "validations" do
-    it { is_expected.to validate_presence_of(:email) }
-    it { is_expected.to validate_presence_of(:password) }
-    it { is_expected.to validate_presence_of(:company_name) }
-    it { is_expected.to validate_length_of(:password).is_at_least(8) }
+class RegistrationFormTest < ActiveSupport::TestCase
+  test "validates presence of required fields" do
+    form = RegistrationForm.new
+    assert_not form.valid?
+    assert_includes form.errors[:email], "can't be blank"
+    assert_includes form.errors[:password], "can't be blank"
+    assert_includes form.errors[:company_name], "can't be blank"
   end
 
-  describe "#save" do
-    subject(:form) { described_class.new(params) }
+  test "validates password minimum length" do
+    form = RegistrationForm.new(password: "short")
+    form.valid?
+    assert form.errors[:password].any? { |msg| msg.include?("minimum") }
+  end
 
-    context "with valid params" do
-      let(:params) do
-        {
-          email: "user@example.com",
-          password: "password123",
-          password_confirmation: "password123",
-          company_name: "Acme Inc",
-          phone: "0123456789"
-        }
-      end
+  test "save with valid params returns true" do
+    form = RegistrationForm.new(valid_params)
+    assert form.save
+  end
 
-      it "returns true" do
-        expect(form.save).to be true
-      end
-
-      it "creates a user" do
-        expect { form.save }.to change(User, :count).by(1)
-      end
-
-      it "creates an account" do
-        expect { form.save }.to change(Account, :count).by(1)
-      end
-
-      it "associates user with account" do
-        form.save
-        expect(form.user.account).to eq(form.account)
-      end
-
-      it "exposes created records" do
-        form.save
-        expect(form.user).to be_persisted
-        expect(form.account).to be_persisted
-      end
+  test "save creates a user" do
+    form = RegistrationForm.new(valid_params)
+    assert_difference "User.count", 1 do
+      form.save
     end
+  end
 
-    context "with invalid params" do
-      let(:params) { { email: "", password: "short" } }
-
-      it "returns false" do
-        expect(form.save).to be false
-      end
-
-      it "does not create records" do
-        expect { form.save }.not_to change(User, :count)
-      end
-
-      it "has errors" do
-        form.save
-        expect(form.errors).not_to be_empty
-      end
+  test "save creates an account" do
+    form = RegistrationForm.new(valid_params)
+    assert_difference "Account.count", 1 do
+      form.save
     end
+  end
 
-    context "with duplicate email" do
-      let!(:existing_user) { create(:user, email_address: "taken@example.com") }
-      let(:params) do
-        {
-          email: "taken@example.com",
-          password: "password123",
-          password_confirmation: "password123",
-          company_name: "Acme Inc"
-        }
-      end
+  test "save associates user with account" do
+    form = RegistrationForm.new(valid_params)
+    form.save
+    assert_equal form.account, form.user.account
+  end
 
-      it "returns false" do
-        expect(form.save).to be false
-      end
+  test "save persists created records" do
+    form = RegistrationForm.new(valid_params)
+    form.save
+    assert_predicate form.user, :persisted?
+    assert_predicate form.account, :persisted?
+  end
 
-      it "adds error to email" do
-        form.save
-        expect(form.errors[:email]).to include("has already been taken")
-      end
+  test "save with invalid params returns false" do
+    form = RegistrationForm.new(email: "", password: "short")
+    assert_not form.save
+  end
+
+  test "save with invalid params does not create records" do
+    form = RegistrationForm.new(email: "", password: "short")
+    assert_no_difference "User.count" do
+      form.save
     end
+  end
+
+  test "save with invalid params has errors" do
+    form = RegistrationForm.new(email: "", password: "short")
+    form.save
+    assert_not form.errors.empty?
+  end
+
+  test "save with duplicate email returns false with error" do
+    User.create!(email_address: "taken@example.com", password: "password123")
+    form = RegistrationForm.new(
+      email: "taken@example.com",
+      password: "password123",
+      password_confirmation: "password123",
+      company_name: "Acme Inc"
+    )
+    assert_not form.save
+    assert_includes form.errors[:email], "has already been taken"
+  end
+
+  private
+
+  def valid_params
+    {
+      email: "user@example.com",
+      password: "password123",
+      password_confirmation: "password123",
+      company_name: "Acme Inc",
+      phone: "0123456789"
+    }
   end
 end
 ```
@@ -235,77 +239,63 @@ end
 
 ## Pattern 2: Search/Filter Form
 
-### Spec First
+### Test First
 
 ```ruby
-# spec/forms/event_search_form_spec.rb
-require 'rails_helper'
+# test/forms/event_search_form_test.rb
+require "test_helper"
 
-RSpec.describe EventSearchForm do
-  let(:account) { create(:account) }
-  let(:form) { described_class.new(account: account, params: params) }
-
-  describe "#results" do
-    let!(:wedding) { create(:event, account: account, event_type: :wedding, name: "Smith Wedding") }
-    let!(:corporate) { create(:event, account: account, event_type: :corporate, name: "Tech Conference") }
-    let!(:other_event) { create(:event, name: "Other") } # Different account
-
-    context "without filters" do
-      let(:params) { {} }
-
-      it "returns all account events" do
-        expect(form.results).to contain_exactly(wedding, corporate)
-      end
-
-      it "excludes other account events" do
-        expect(form.results).not_to include(other_event)
-      end
-    end
-
-    context "with type filter" do
-      let(:params) { { event_type: "wedding" } }
-
-      it "filters by type" do
-        expect(form.results).to contain_exactly(wedding)
-      end
-    end
-
-    context "with search query" do
-      let(:params) { { query: "smith" } }
-
-      it "searches by name" do
-        expect(form.results).to contain_exactly(wedding)
-      end
-    end
-
-    context "with date range" do
-      let(:params) { { start_date: Date.today, end_date: 1.month.from_now } }
-      let!(:upcoming) { create(:event, account: account, event_date: 2.weeks.from_now) }
-      let!(:past) { create(:event, account: account, event_date: 1.week.ago) }
-
-      it "filters by date range" do
-        expect(form.results).to include(upcoming)
-        expect(form.results).not_to include(past)
-      end
-    end
+class EventSearchFormTest < ActiveSupport::TestCase
+  setup do
+    @account = accounts(:one)
+    @wedding = events(:wedding)
+    @corporate = events(:corporate)
   end
 
-  describe "#any_filters?" do
-    context "with filters" do
-      let(:params) { { query: "test" } }
+  test "returns all account events without filters" do
+    form = EventSearchForm.new(account: @account, params: {})
+    assert_includes form.results, @wedding
+    assert_includes form.results, @corporate
+  end
 
-      it "returns true" do
-        expect(form.any_filters?).to be true
-      end
-    end
+  test "excludes other account events" do
+    other_event = events(:other_account_event)
+    form = EventSearchForm.new(account: @account, params: {})
+    assert_not_includes form.results, other_event
+  end
 
-    context "without filters" do
-      let(:params) { {} }
+  test "filters by event type" do
+    form = EventSearchForm.new(account: @account, params: { event_type: "wedding" })
+    assert_includes form.results, @wedding
+    assert_not_includes form.results, @corporate
+  end
 
-      it "returns false" do
-        expect(form.any_filters?).to be false
-      end
-    end
+  test "searches by name" do
+    form = EventSearchForm.new(account: @account, params: { query: "smith" })
+    assert_includes form.results, @wedding
+    assert_not_includes form.results, @corporate
+  end
+
+  test "filters by date range" do
+    upcoming = Event.create!(account: @account, event_date: 2.weeks.from_now, name: "Upcoming")
+    past = Event.create!(account: @account, event_date: 1.week.ago, name: "Past")
+
+    form = EventSearchForm.new(
+      account: @account,
+      params: { start_date: Date.today, end_date: 1.month.from_now }
+    )
+    assert_includes form.results, upcoming
+    assert_not_includes form.results, past
+  end
+
+  test "any_filters? returns true with filters" do
+    form = EventSearchForm.new(account: @account, params: { query: "test" })
+    assert form.any_filters?
+  end
+
+  test "any_filters? returns false without filters" do
+    form = EventSearchForm.new(account: @account, params: {})
+    assert_not form.any_filters?
   end
 end
 ```

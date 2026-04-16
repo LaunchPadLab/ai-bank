@@ -4,7 +4,7 @@ description: Creates ViewComponents for reusable UI elements with TDD. Use when 
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
-# ViewComponent Patterns for Rails 8
+# ViewComponent Patterns for Rails 8.x
 
 ## Overview
 
@@ -28,11 +28,11 @@ bin/rails generate component Card title
 
 ```
 ViewComponent Progress:
-- [ ] Step 1: Write component spec (RED)
-- [ ] Step 2: Run spec (fails - no component)
+- [ ] Step 1: Write component test (RED)
+- [ ] Step 2: Run test (fails - no component)
 - [ ] Step 3: Generate component skeleton
 - [ ] Step 4: Implement component
-- [ ] Step 5: Run spec (GREEN)
+- [ ] Step 5: Run test (GREEN)
 - [ ] Step 6: Add variants/slots if needed
 ```
 
@@ -54,48 +54,43 @@ app/components/
     ├── component.rb
     └── component.html.erb
 
-spec/components/
-├── card_component_spec.rb
-├── badge_component_spec.rb
+test/components/
+├── card_component_test.rb
+├── badge_component_test.rb
 └── table/
-    └── component_spec.rb
+    └── component_test.rb
 ```
 
-## Step 1: Component Spec (RED)
+## Step 1: Component Test (RED)
 
 ```ruby
-# spec/components/card_component_spec.rb
-require "rails_helper"
+# test/components/card_component_test.rb
+require "test_helper"
 
-RSpec.describe CardComponent, type: :component do
-  let(:component) { described_class.new(title: "Test Title") }
-
-  describe "rendering" do
-    it "renders the title" do
-      render_inline(component)
-      expect(page).to have_css("h3", text: "Test Title")
-    end
-
-    it "renders content block" do
-      render_inline(component) { "Card content" }
-      expect(page).to have_text("Card content")
-    end
+class CardComponentTest < ViewComponent::TestCase
+  setup do
+    @component = CardComponent.new(title: "Test Title")
   end
 
-  describe "with optional subtitle" do
-    let(:component) { described_class.new(title: "Title", subtitle: "Subtitle") }
-
-    it "renders subtitle" do
-      render_inline(component)
-      expect(page).to have_css("p", text: "Subtitle")
-    end
+  test "renders the title" do
+    render_inline(@component)
+    assert_selector "h3", text: "Test Title"
   end
 
-  describe "without subtitle" do
-    it "does not render subtitle element" do
-      render_inline(component)
-      expect(page).not_to have_css(".subtitle")
-    end
+  test "renders content block" do
+    render_inline(@component) { "Card content" }
+    assert_text "Card content"
+  end
+
+  test "renders subtitle when provided" do
+    component = CardComponent.new(title: "Title", subtitle: "Subtitle")
+    render_inline(component)
+    assert_selector "p", text: "Subtitle"
+  end
+
+  test "does not render subtitle element when not provided" do
+    render_inline(@component)
+    assert_no_selector ".subtitle"
   end
 end
 ```
@@ -110,7 +105,6 @@ class ApplicationComponent < ViewComponent::Base
   include ActionView::Helpers::TagHelper
   include ActionView::Helpers::NumberHelper
 
-  # Shared helper for nil values
   def not_specified_span
     tag.span(I18n.t("components.common.not_specified"), class: "text-slate-400 italic")
   end
@@ -358,25 +352,23 @@ Usage with collection:
 
 ## Testing Components
 
-### Basic Spec Structure
+### Basic Test Structure
 
 ```ruby
-RSpec.describe BadgeComponent, type: :component do
-  describe "variants" do
-    it "renders success variant" do
-      render_inline(described_class.new(text: "Active", variant: :success))
-      expect(page).to have_css(".bg-green-100")
-    end
+class BadgeComponentTest < ViewComponent::TestCase
+  test "renders success variant" do
+    render_inline(BadgeComponent.new(text: "Active", variant: :success))
+    assert_selector ".bg-green-100"
+  end
 
-    it "renders error variant" do
-      render_inline(described_class.new(text: "Failed", variant: :error))
-      expect(page).to have_css(".bg-red-100")
-    end
+  test "renders error variant" do
+    render_inline(BadgeComponent.new(text: "Failed", variant: :error))
+    assert_selector ".bg-red-100"
+  end
 
-    it "defaults to neutral" do
-      render_inline(described_class.new(text: "Unknown"))
-      expect(page).to have_css(".bg-slate-100")
-    end
+  test "defaults to neutral" do
+    render_inline(BadgeComponent.new(text: "Unknown"))
+    assert_selector ".bg-slate-100"
   end
 end
 ```
@@ -384,23 +376,23 @@ end
 ### Testing Slots
 
 ```ruby
-RSpec.describe CardComponent, type: :component do
-  it "renders header slot" do
-    render_inline(described_class.new) do |card|
+class CardComponentTest < ViewComponent::TestCase
+  test "renders header slot" do
+    render_inline(CardComponent.new) do |card|
       card.with_header { "Custom Header" }
     end
 
-    expect(page).to have_text("Custom Header")
+    assert_text "Custom Header"
   end
 
-  it "renders multiple action slots" do
-    render_inline(described_class.new) do |card|
+  test "renders multiple action slots" do
+    render_inline(CardComponent.new) do |card|
       card.with_action { "Action 1" }
       card.with_action { "Action 2" }
     end
 
-    expect(page).to have_text("Action 1")
-    expect(page).to have_text("Action 2")
+    assert_text "Action 1"
+    assert_text "Action 2"
   end
 end
 ```
@@ -408,12 +400,11 @@ end
 ### Testing Collections
 
 ```ruby
-RSpec.describe EventCardComponent, type: :component do
-  let(:events) { create_list(:event, 3) }
-
-  it "renders collection" do
-    render_inline(described_class.with_collection(events))
-    expect(page).to have_css(".event-card", count: 3)
+class EventCardComponentTest < ViewComponent::TestCase
+  test "renders collection" do
+    events = 3.times.map { events(:one).dup }
+    render_inline(EventCardComponent.with_collection(events))
+    assert_selector ".event-card", count: 3
   end
 end
 ```
@@ -469,7 +460,7 @@ end
 ## Previews (Development)
 
 ```ruby
-# spec/components/previews/badge_component_preview.rb
+# test/components/previews/badge_component_preview.rb
 class BadgeComponentPreview < ViewComponent::Preview
   def success
     render BadgeComponent.new(text: "Active", variant: :success)
@@ -489,11 +480,15 @@ Access at: `http://localhost:3000/rails/view_components`
 
 ## Checklist
 
-- [ ] Spec written first (RED)
+- [ ] Test written first (RED)
 - [ ] Extends `ApplicationComponent`
 - [ ] Uses slots for flexible content
 - [ ] Variants use constants (Open/Closed)
 - [ ] Tested with different inputs
 - [ ] Collection rendering tested
 - [ ] Preview created for development
-- [ ] All specs GREEN
+- [ ] All tests GREEN
+
+## Reference
+
+- [Domain Patterns](reference/domain-patterns.md) — Design principles, complete component structures, Minitest tests, previews, collections, polymorphic slots, Stimulus integration, i18n, anti-patterns, and checklists

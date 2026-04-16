@@ -32,6 +32,7 @@ A centralized repository of AI tooling resources -- skills, agents, rules, Docke
 - [Claude Skills](#claude-skills)
 - [Claude Agents](#claude-agents)
 - [Claude Commands](#claude-commands)
+- [Claude Rules](#claude-rules)
 - [Cursor Rules](#cursor-rules)
 - [Templates](#templates)
 - [Docker](#docker)
@@ -102,9 +103,25 @@ See all available agents in the [Claude Agents](#claude-agents) catalog below.
 
 ### What are Rules?
 
-Rules are persistent behavioral instructions for the Cursor IDE. They are stored as markdown files with YAML frontmatter and live in `.cursor/rules/` in your project. Cursor automatically injects matching rules into the agent's context based on glob patterns, eliminating the need to repeat project conventions in every conversation.
+Rules are persistent behavioral instructions that automatically inject into an AI agent's context based on file patterns. They are stored as markdown files with YAML frontmatter and eliminate the need to repeat project conventions in every conversation.
 
-A rule file looks like this:
+Both **Claude Code** and **Cursor** support rules, with slightly different formats:
+
+**Claude Code rules** live in `.claude/rules/` and use `paths:` for activation:
+
+```markdown
+---
+paths:
+  - "app/models/**/*.rb"
+  - "test/models/**/*.rb"
+---
+
+# Model Conventions
+
+Always use UUIDs as primary keys...
+```
+
+**Cursor rules** live in `.cursor/rules/` and use `globs:` and `alwaysApply:`:
 
 ```markdown
 ---
@@ -118,16 +135,11 @@ alwaysApply: true
 You are operating as a senior consulting team...
 ```
 
-**Key frontmatter fields:**
-- `description` -- what the rule does (used for AI matching)
-- `globs` -- file patterns that trigger the rule (e.g., `**/*.rb`, `app/models/**`)
-- `alwaysApply` -- when `true`, the rule is always active regardless of file context
-
-Rules differ from CLAUDE.md/AGENTS.md in that they support glob-based conditional activation. A rule for `app/models/**` only activates when you are working in model files. This keeps irrelevant rules out of the context window.
+Rules differ from CLAUDE.md/AGENTS.md in that they support conditional activation based on file patterns. A rule for `app/models/**` only activates when you are working in model files. This keeps irrelevant rules out of the context window.
 
 **When to use a rule:** For persistent, project-wide conventions (security standards, scope management, coding style) or domain-specific guidance that should activate automatically for certain file types.
 
-See all available rules in the [Cursor Rules](#cursor-rules) catalog below.
+See all available rules in the [Claude Rules](#claude-rules) and [Cursor Rules](#cursor-rules) catalogs below.
 
 ---
 
@@ -435,9 +447,10 @@ The Dockerfile in this repository at [`cursor/docker/Dockerfile`](cursor/docker/
 ```
 ai-bank/
 ├── claude/
-│   ├── agents/          # 33 specialized agent definitions
-│   ├── commands/        # 4 workflow slash commands
-│   └── skills/          # 33 domain-specific skills with reference materials
+│   ├── agents/          # 42 specialized agent definitions
+│   ├── commands/        # 6 workflow slash commands
+│   ├── rules/           # 20 path-activated Claude Code rules
+│   └── skills/          # 42 domain-specific skills with reference materials
 ├── claude-md-templates/ # Reusable CLAUDE.md templates
 ├── cursor/
 │   ├── docker/          # Dockerfile for Cursor Cloud Agent environments
@@ -460,50 +473,64 @@ Skills live in `claude/skills/` and are organized by domain. To use a skill in a
 | [`action-cable-patterns`](claude/skills/action-cable-patterns/) | Real-time features with Action Cable and WebSockets |
 | [`action-mailer-patterns`](claude/skills/action-mailer-patterns/) | Transactional emails with Action Mailer and TDD |
 | [`active-storage-setup`](claude/skills/active-storage-setup/) | File uploads with variants and direct uploads |
-| [`api-versioning`](claude/skills/api-versioning/) | RESTful API design with versioning and request specs |
+| [`api-patterns`](claude/skills/api-patterns/) | REST API patterns with respond_to blocks, Jbuilder, token auth, and pagination |
 | [`authentication-flow`](claude/skills/authentication-flow/) | Authentication using the Rails 8 built-in generator |
-| [`authorization-pundit`](claude/skills/authorization-pundit/) | Policy-based authorization with Pundit |
+| [`avo-resources`](claude/skills/avo-resources/) | Avo 3.x admin panel resources, fields, associations, and authorization |
 | [`caching-strategies`](claude/skills/caching-strategies/) | Fragment, Russian doll, and low-level caching patterns |
 | [`database-migrations`](claude/skills/database-migrations/) | Safe migrations with proper indexes and rollback strategies |
+| [`events-patterns`](claude/skills/events-patterns/) | Event tracking, activity feeds, webhook delivery, and audit trails |
 | [`form-object-patterns`](claude/skills/form-object-patterns/) | Form objects for multi-model and wizard forms |
 | [`i18n-patterns`](claude/skills/i18n-patterns/) | Internationalization with Rails I18n for multi-language support |
+| [`multi-tenant-patterns`](claude/skills/multi-tenant-patterns/) | URL-based multi-tenancy, account scoping, and data isolation |
 | [`performance-optimization`](claude/skills/performance-optimization/) | N+1 queries, slow queries, and memory problem detection |
+| [`policy-patterns`](claude/skills/policy-patterns/) | Pundit authorization policies with TDD for role-based access control |
 | [`rails-architecture`](claude/skills/rails-architecture/) | Modern Rails 8 architecture decisions and layered design |
 | [`rails-concern`](claude/skills/rails-concern/) | Shared behavior across models and controllers with TDD |
 | [`rails-controller`](claude/skills/rails-controller/) | Controllers with TDD -- request spec first, then implementation |
 | [`rails-model-generator`](claude/skills/rails-model-generator/) | Models with TDD -- spec first, then migration, then model |
 | [`rails-presenter`](claude/skills/rails-presenter/) | Presenter objects for view formatting using SimpleDelegator |
 | [`rails-query-object`](claude/skills/rails-query-object/) | Query objects for complex database queries following TDD |
-| [`rails-security-best-practices`](claude/skills/rails-security-best-practices/) | Security across controllers, models, APIs, and configuration |
 | [`rails-service-object`](claude/skills/rails-service-object/) | Service objects following single-responsibility with specs |
-| [`solid-queue-setup`](claude/skills/solid-queue-setup/) | Background jobs in Rails 8 with Solid Queue |
-| [`tdd-cycle`](claude/skills/tdd-cycle/) | Red-Green-Refactor TDD workflow guidance |
+| [`sidekiq-setup`](claude/skills/sidekiq-setup/) | Background jobs with Sidekiq, queues, and Redis configuration |
+| [`state-records-patterns`](claude/skills/state-records-patterns/) | "State as records, not booleans" pattern for rich state tracking |
 | [`viewcomponent-patterns`](claude/skills/viewcomponent-patterns/) | Reusable UI components with ViewComponent and TDD |
 
-#### Hotwire and Native Mobile
+#### Hotwire, Frontend, and Native Mobile
 
 | Skill | Description |
 |---|---|
-| [`hotwire-patterns`](claude/skills/hotwire-patterns/) | Turbo Frames, Turbo Streams, and Stimulus controllers |
 | [`hotwire-native-android`](claude/skills/hotwire-native-android/) | Hybrid Android apps with Hotwire Native and Kotlin |
-| [`hotwire-native-ios`](claude/skills/hotwire-native-ios/) | Hybrid iOS apps with Hotwire Native and Swift/UIKit |
 | [`hotwire-native-auth`](claude/skills/hotwire-native-auth/) | Web-based authentication for Hotwire Native iOS and Android |
+| [`hotwire-native-ios`](claude/skills/hotwire-native-ios/) | Hybrid iOS apps with Hotwire Native and Swift/UIKit |
 | [`hotwire-native-path-config`](claude/skills/hotwire-native-path-config/) | Path configuration routing and navigation rules |
+| [`stimulus-patterns`](claude/skills/stimulus-patterns/) | Stimulus controller patterns, lifecycle, targets, values, and actions |
+| [`tailwind-patterns`](claude/skills/tailwind-patterns/) | Tailwind CSS 4 utility patterns, responsive layouts, and accessibility |
+| [`turbo-patterns`](claude/skills/turbo-patterns/) | Turbo Streams, Turbo Frames, morphing, and broadcasting patterns |
 
-#### HIPAA Compliance
-
-| Skill | Description |
-|---|---|
-| [`hipaa-compliance`](claude/skills/hipaa-compliance/) | Core HIPAA compliance rules for healthcare app development |
-| [`hipaa-infrastructure`](claude/skills/hipaa-infrastructure/) | HIPAA-compliant infrastructure requirements for Heroku Shield |
-| [`hipaa-notifications`](claude/skills/hipaa-notifications/) | HIPAA-compliant notification and messaging rules |
-| [`hipaa-security`](claude/skills/hipaa-security/) | HIPAA security safeguards and authentication requirements |
-
-#### Project and Meta
+#### TDD and Code Quality
 
 | Skill | Description |
 |---|---|
-| [`nova`](claude/skills/nova/) | Nova project workflow rules for AI-assisted development |
+| [`code-review`](claude/skills/code-review/) | Code quality analysis, architecture audits, and anti-pattern detection |
+| [`lint-patterns`](claude/skills/lint-patterns/) | RuboCop rules, ERB lint, auto-correct patterns, and Rails Omakase standards |
+| [`red-test-patterns`](claude/skills/red-test-patterns/) | RED phase test templates for writing failing Minitest tests before implementation |
+| [`refactoring-patterns`](claude/skills/refactoring-patterns/) | Refactoring recipes, anti-pattern detection, and codebase modernization |
+| [`tdd-cycle`](claude/skills/tdd-cycle/) | Red-Green-Refactor TDD workflow guidance |
+| [`testing-patterns`](claude/skills/testing-patterns/) | Eight proven refactoring patterns with before/after Ruby examples |
+
+#### Feature Planning and Orchestration
+
+| Skill | Description |
+|---|---|
+| [`feature-plan`](claude/skills/feature-plan/) | TDD implementation plans with incremental PR breakdown and agent assignments |
+| [`feature-review`](claude/skills/feature-review/) | Feature spec review, scoring, gap analysis, and Gherkin scenario generation |
+| [`feature-spec`](claude/skills/feature-spec/) | Structured interview for creating complete feature specifications |
+| [`implement-patterns`](claude/skills/implement-patterns/) | Feature orchestration recipes, agent coordination, and dependency ordering |
+
+#### Meta
+
+| Skill | Description |
+|---|---|
 | [`skill-creator`](claude/skills/skill-creator/) | Guide and tooling for creating new skills |
 
 ---
@@ -519,37 +546,55 @@ Agents live in `claude/agents/`. To use an agent in a project, copy or symlink t
 | [`implement-agent`](claude/agents/implement-agent.md) | Orchestrates all specialized agents to implement complete Rails features |
 | [`refactoring-agent`](claude/agents/refactoring-agent.md) | Orchestrates all specialized agents to refactor Rails codebases |
 
+#### Feature Planning Agents
+
+| Agent | Description |
+|---|---|
+| [`feature-plan-agent`](claude/agents/feature-plan-agent.md) | Creates TDD implementation plans with incremental PR breakdown and agent assignments |
+| [`feature-review-agent`](claude/agents/feature-review-agent.md) | Reviews feature specs for completeness, scores quality, and identifies gaps |
+| [`feature-spec-agent`](claude/agents/feature-spec-agent.md) | Guides structured interviews to create complete feature specifications with Gherkin scenarios |
+
 #### Rails Feature Agents
 
 | Agent | Description |
 |---|---|
 | [`api-agent`](claude/agents/api-agent.md) | Builds REST APIs with same controllers, different formats |
 | [`auth-agent`](claude/agents/auth-agent.md) | Implements custom passwordless authentication without Devise |
-| [`caching-agent`](claude/agents/caching-agent.md) | Implements HTTP caching with ETags and fragment caching |
+| [`avo-agent`](claude/agents/avo-agent.md) | Creates and configures Avo 3.x resources for admin panels |
+| [`caching-agent`](claude/agents/caching-agent.md) | Implements HTTP caching with ETags, fresh_when, and fragment caching |
 | [`concerns-agent`](claude/agents/concerns-agent.md) | Creates and refactors model and controller concerns |
 | [`crud-agent`](claude/agents/crud-agent.md) | Generates CRUD controllers following the "everything is CRUD" philosophy |
 | [`events-agent`](claude/agents/events-agent.md) | Builds event tracking and activity systems with webhooks |
-| [`jobs-agent`](claude/agents/jobs-agent.md) | Implements background jobs with Solid Queue using `_later`/`_now` conventions |
+| [`jobs-agent`](claude/agents/jobs-agent.md) | Implements background jobs using Sidekiq for asynchronous processing |
+| [`mailer-agent`](claude/agents/mailer-agent.md) | Creates Action Mailer emails with layouts, previews, and delivery patterns |
 | [`migration-agent`](claude/agents/migration-agent.md) | Creates migrations with UUIDs, account scoping, and no foreign keys |
 | [`model-agent`](claude/agents/model-agent.md) | Builds rich domain models with associations, scopes, and business logic |
 | [`multi-tenant-agent`](claude/agents/multi-tenant-agent.md) | Implements URL-based multi-tenancy with account scoping |
+| [`policy-agent`](claude/agents/policy-agent.md) | Creates Pundit authorization policies with Minitest tests and scope restrictions |
 | [`presenter-agent`](claude/agents/presenter-agent.md) | Creates presentation logic objects (Presenters/Decorators) for views |
 | [`query-agent`](claude/agents/query-agent.md) | Creates encapsulated, reusable query objects |
-| [`rails-expert`](claude/agents/rails-expert.md) | Expert Rails 8.1 generalist with modern conventions and Hotwire |
+| [`rails-expert`](claude/agents/rails-expert.md) | Expert Rails 8.x generalist with modern conventions and Hotwire |
 | [`service-agent`](claude/agents/service-agent.md) | Creates well-structured service objects following SOLID principles |
 | [`state-records-agent`](claude/agents/state-records-agent.md) | Implements "state as records, not booleans" pattern |
 | [`stimulus-agent`](claude/agents/stimulus-agent.md) | Builds focused, single-purpose Stimulus controllers |
 | [`test-agent`](claude/agents/test-agent.md) | Writes Minitest tests, integration tests, and fixtures |
 | [`turbo-agent`](claude/agents/turbo-agent.md) | Creates Turbo Streams, Turbo Frames, and morphing patterns |
 
+#### TDD Agents
+
+| Agent | Description |
+|---|---|
+| [`tdd-red-agent`](claude/agents/tdd-red-agent.md) | Writes focused, failing Minitest tests during the TDD RED phase |
+| [`tdd-refactoring-agent`](claude/agents/tdd-refactoring-agent.md) | Improves code structure while keeping tests green during the TDD REFACTOR phase |
+
 #### Frontend and UI Agents
 
 | Agent | Description |
 |---|---|
 | [`frontend-developer`](claude/agents/frontend-developer.md) | Builds robust, scalable React components and frontend solutions |
-| [`tailwind-agent`](claude/agents/tailwind-agent.md) | Tailwind CSS 4 styling for Rails 8.1 ERB views and ViewComponents |
+| [`tailwind-agent`](claude/agents/tailwind-agent.md) | Tailwind CSS 4 styling for Rails 8.x ERB views and ViewComponents |
 | [`ui-designer`](claude/agents/ui-designer.md) | Visual designer specializing in intuitive, accessible interfaces |
-| [`view-component-agent`](claude/agents/view-component-agent.md) | Reusable, tested, performant ViewComponents for Rails 8.1 |
+| [`view-component-agent`](claude/agents/view-component-agent.md) | Reusable, tested, performant ViewComponents for Rails 8.x |
 
 #### Infrastructure and Quality Agents
 
@@ -559,8 +604,10 @@ Agents live in `claude/agents/`. To use an agent in a project, copy or symlink t
 | [`database-optimizer`](claude/agents/database-optimizer.md) | Query optimization, indexes, and database performance tuning |
 | [`hotwire-native-android-agent`](claude/agents/hotwire-native-android-agent.md) | Hybrid Android apps with Hotwire Native and Kotlin |
 | [`hotwire-native-ios-agent`](claude/agents/hotwire-native-ios-agent.md) | Hybrid iOS apps with Hotwire Native and Swift |
+| [`lint-agent`](claude/agents/lint-agent.md) | Auto-corrects Ruby and Rails code style using RuboCop and ERB lint |
 | [`performance-monitor`](claude/agents/performance-monitor.md) | System-wide metrics, anomaly detection, and observability |
 | [`postgres-pro`](claude/agents/postgres-pro.md) | PostgreSQL administration, internals, and performance |
+| [`prompt-engineer`](claude/agents/prompt-engineer.md) | Designs, optimizes, and evaluates prompts for production LLM systems |
 | [`review-agent`](claude/agents/review-agent.md) | Code review for adherence to modern Rails patterns and conventions |
 | [`security-agent`](claude/agents/security-agent.md) | Rails security auditing, vulnerability detection, and OWASP best practices |
 
@@ -574,8 +621,39 @@ Commands are slash commands that Claude Code can invoke. They live in `claude/co
 |---|---|
 | [`create-prd`](claude/commands/create-prd.md) | Generate a Product Requirements Document from feature and JTBD documentation |
 | [`create-pull-request`](claude/commands/create-pull-request.md) | Create a GitHub PR using the CLI with standardized templates |
+| [`frame-problem`](claude/commands/frame-problem.md) | Challenge stakeholder requests to identify real needs and propose optimal solutions |
 | [`pr-review`](claude/commands/pr-review.md) | Multi-role PR review: Developer, QA, Security, DevOps, and UX perspectives |
+| [`refine-specification`](claude/commands/refine-specification.md) | Ask clarifying questions to refine feature specifications with structured answers |
 | [`sync-asana`](claude/commands/sync-asana.md) | Sync user stories from markdown to Asana |
+
+---
+
+### Claude Rules
+
+Rules live in `claude/rules/` and use `paths:` in YAML frontmatter for path-based activation in Claude Code. When you are working in files matching a rule's paths, the rule automatically loads into context. To use a rule, copy the file into your project's `.claude/rules/` directory.
+
+| Rule | Paths | Description |
+|---|---|---|
+| [`android`](claude/rules/android.md) | `android/**/*` | Hotwire Native Android conventions for Kotlin and Gradle |
+| [`anti-patterns`](claude/rules/anti-patterns.md) | `app/**/*.rb`, `test/**/*.rb` | Common anti-patterns to avoid in Ruby and Rails code |
+| [`avo`](claude/rules/avo.md) | `app/avo/**/*.erb`, `test/avo/**/*.rb` | Avo 3.x resource and view conventions |
+| [`avo-controllers`](claude/rules/avo-controllers.md) | `app/controllers/avo/**/*.rb` | Avo controller patterns and overrides |
+| [`cli`](claude/rules/cli.md) | -- | Development CLI commands reference (`bin/dev`, `rails test`, etc.) |
+| [`controllers`](claude/rules/controllers.md) | `app/controllers/**/*.rb`, `test/controllers/**/*.rb` | Controller conventions, CRUD patterns, and request specs |
+| [`frontend`](claude/rules/frontend.md) | `**/*.js`, `**/*.ts`, `app/javascript/` | JavaScript/TypeScript and Stimulus conventions |
+| [`git-conventions`](claude/rules/git-conventions.md) | -- | Git commit messages and PR conventions |
+| [`ios`](claude/rules/ios.md) | `ios/**/*` | Hotwire Native iOS conventions for Swift and UIKit |
+| [`jobs`](claude/rules/jobs.md) | `app/jobs/**/*.rb`, `test/jobs/**/*.rb` | Background job conventions with Sidekiq |
+| [`mailers`](claude/rules/mailers.md) | `app/mailers/**/*.rb`, `app/views/**/*_mailer/**/*.erb` | Action Mailer conventions and email templates |
+| [`migrations`](claude/rules/migrations.md) | `db/migrate/**/*.rb`, `db/schema.rb` | Migration conventions, UUIDs, and index strategies |
+| [`models`](claude/rules/models.md) | `app/models/**/*.rb`, `test/models/**/*.rb` | Model conventions, associations, validations, and scopes |
+| [`policies`](claude/rules/policies.md) | `app/policies/**/*.rb`, `test/policies/**/*.rb` | Pundit authorization policy conventions |
+| [`principles`](claude/rules/principles.md) | -- | Development principles: KISS, DRY, YAGNI, and conventions |
+| [`queries`](claude/rules/queries.md) | `app/queries/**/*.rb`, `test/queries/**/*.rb` | Query object conventions and patterns |
+| [`services`](claude/rules/services.md) | `app/services/**/*.rb`, `test/services/**/*.rb` | Service object conventions and SOLID principles |
+| [`styles`](claude/rules/styles.md) | `app/assets/stylesheets/**`, `app/views/**/*.erb` | Tailwind CSS 4 styling and component patterns |
+| [`testing`](claude/rules/testing.md) | `test/**/*.rb` | Minitest conventions, fixtures, and test organization |
+| [`views`](claude/rules/views.md) | `app/views/**/*.erb`, `app/components/**/*.rb` | ERB view conventions, ViewComponents, and Turbo patterns |
 
 ---
 
@@ -628,13 +706,13 @@ Use this Dockerfile as the environment definition for Cursor Cloud Agent tasks. 
 
 ```bash
 # Copy a single skill
-cp -r claude/skills/rails-security-best-practices /path/to/project/.claude/skills/
+cp -r claude/skills/rails-architecture /path/to/project/.claude/skills/
 
 # Copy multiple skills at once
 cp -r claude/skills/tdd-cycle claude/skills/rails-model-generator /path/to/project/.claude/skills/
 
 # Symlink (changes in ai-bank propagate automatically)
-ln -s /path/to/ai-bank/claude/skills/hipaa-compliance /path/to/project/.claude/skills/hipaa-compliance
+ln -s /path/to/ai-bank/claude/skills/policy-patterns /path/to/project/.claude/skills/policy-patterns
 ```
 
 ### Using Agents in a Project
@@ -648,6 +726,17 @@ cp claude/agents/test-agent.md /path/to/project/.claude/agents/
 
 ```bash
 cp claude/commands/pr-review.md /path/to/project/.claude/commands/
+```
+
+### Using Claude Rules in a Project
+
+```bash
+# Copy individual rules
+cp claude/rules/models.md /path/to/project/.claude/rules/
+cp claude/rules/controllers.md /path/to/project/.claude/rules/
+
+# Copy all rules at once
+cp claude/rules/*.md /path/to/project/.claude/rules/
 ```
 
 ### Using Rules in Cursor
@@ -692,6 +781,20 @@ ln -s /path/to/ai-bank/cursor/rules/hipaa-security /path/to/project/.cursor/rule
 2. Add YAML frontmatter with `name`, `description`, `model`, and optionally `color`
 3. Write the agent's system prompt: role, philosophy, capabilities, and boundaries
 4. Follow existing agents as structural examples
+
+### Adding a New Claude Rule
+
+1. Create a markdown file under `claude/rules/` (kebab-case, `.md` extension)
+2. Add YAML frontmatter with `paths:` specifying which file patterns activate the rule:
+   ```markdown
+   ---
+   paths:
+     - "app/models/**/*.rb"
+     - "test/models/**/*.rb"
+   ---
+   ```
+3. Write concise, convention-focused instructions in the body
+4. Rules without `paths:` are always available but not automatically activated
 
 ### Adding a New Cursor Rule
 

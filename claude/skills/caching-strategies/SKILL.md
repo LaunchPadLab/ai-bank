@@ -23,8 +23,6 @@ config.action_controller.perform_caching = true
 config.cache_store = :memory_store
 
 # config/environments/production.rb
-config.cache_store = :solid_cache_store  # Rails 8 default
-# OR
 config.cache_store = :redis_cache_store, { url: ENV["REDIS_URL"] }
 ```
 
@@ -38,8 +36,7 @@ bin/rails dev:cache
 | Store | Use Case | Pros | Cons |
 |-------|----------|------|------|
 | `:memory_store` | Development | Fast, no setup | Not shared, limited size |
-| `:solid_cache_store` | Production (Rails 8) | Database-backed, no Redis | Slightly slower |
-| `:redis_cache_store` | Production | Fast, shared | Requires Redis |
+| `:redis_cache_store` | Production (recommended) | Fast, shared, pattern deletion | Requires Redis |
 | `:file_store` | Simple production | Persistent, no Redis | Slow, not shared |
 | `:null_store` | Testing | No caching | N/A |
 
@@ -296,10 +293,10 @@ end
 ### Pattern-Based Deletion
 
 ```ruby
-# Delete all keys matching pattern (Redis only)
+# Delete all keys matching pattern
 Rails.cache.delete_matched("dashboard/*")
 
-# For Solid Cache / Memory Store, use namespaced keys
+# For Redis cache store, pattern deletion is supported natively
 Rails.cache.delete("dashboard/#{account_id}/stats")
 Rails.cache.delete("dashboard/#{account_id}/events")
 ```
@@ -421,16 +418,17 @@ end
 
 ## Testing Caching
 
-### Spec Configuration
+### Test Configuration
 
 ```ruby
-# spec/rails_helper.rb
-RSpec.configure do |config|
-  config.around(:each, :caching) do |example|
+# test/test_helper.rb
+class ActiveSupport::TestCase
+  def with_caching
     caching = ActionController::Base.perform_caching
     ActionController::Base.perform_caching = true
     Rails.cache.clear
-    example.run
+    yield
+  ensure
     ActionController::Base.perform_caching = caching
   end
 end
@@ -439,20 +437,22 @@ end
 ### Testing Cached Views
 
 ```ruby
-RSpec.describe "Events", type: :request, :caching do
-  it "caches the event show page" do
-    event = create(:event)
+# test/requests/events_caching_test.rb
+require "test_helper"
 
-    # First request - cache miss
-    get event_path(event)
-    expect(response.body).to include(event.name)
+class EventsCachingTest < ActionDispatch::IntegrationTest
+  test "caches the event show page" do
+    event = events(:one)
 
-    # Update event
-    event.update!(name: "New Name")
+    with_caching do
+      get event_path(event)
+      assert_includes response.body, event.name
 
-    # Second request - should show new name (cache invalidated)
-    get event_path(event)
-    expect(response.body).to include("New Name")
+      event.update!(name: "New Name")
+
+      get event_path(event)
+      assert_includes response.body, "New Name"
+    end
   end
 end
 ```
@@ -460,21 +460,18 @@ end
 ### Testing Cache Invalidation
 
 ```ruby
-RSpec.describe DashboardStatsService do
-  describe "#invalidate" do
-    it "clears the cache" do
-      account = create(:account)
-      service = described_class.new
+# test/services/dashboard_stats_service_test.rb
+require "test_helper"
 
-      # Prime cache
-      service.call(account: account)
+class DashboardStatsServiceTest < ActiveSupport::TestCase
+  test "invalidate clears the cache" do
+    account = accounts(:one)
+    service = DashboardStatsService.new
 
-      # Invalidate
-      service.invalidate(account: account)
+    service.call(account: account)
+    service.invalidate(account: account)
 
-      # Verify cache miss
-      expect(Rails.cache.exist?("dashboard_stats/#{account.id}")).to be false
-    end
+    assert_not Rails.cache.exist?("dashboard_stats/#{account.id}")
   end
 end
 ```
@@ -510,3 +507,6 @@ end
 - [ ] HTTP caching headers for API
 - [ ] Cache warming for cold starts (if needed)
 - [ ] Monitoring for hit/miss rates
+
+## Additional Resources
+- For detailed caching patterns and code examples, see [reference/domain-patterns.md](reference/domain-patterns.md)

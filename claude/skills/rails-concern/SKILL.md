@@ -1,19 +1,19 @@
 ---
 name: rails-concern
 description: Creates Rails concerns for shared behavior across models or controllers with TDD. Use when extracting shared code, creating reusable modules, DRYing up models/controllers, or when user mentions concerns, modules, mixins, or shared behavior.
-allowed-tools: Read, Write, Edit, Bash(bundle exec rspec:*), Glob, Grep
+allowed-tools: Read, Write, Edit, Bash(bin/rails test:*), Glob, Grep
 ---
 
 # Rails Concern Generator (TDD)
 
-Creates concerns (ActiveSupport::Concern modules) for shared behavior with specs first.
+Creates concerns (ActiveSupport::Concern modules) for shared behavior with tests first.
 
 ## Quick Start
 
-1. Write failing spec testing the concern behavior
-2. Run spec to confirm RED
+1. Write failing test testing the concern behavior
+2. Run test to confirm RED
 3. Implement concern in `app/models/concerns/` or `app/controllers/concerns/`
-4. Run spec to confirm GREEN
+4. Run test to confirm GREEN
 
 ## When to Use Concerns
 
@@ -31,39 +31,33 @@ Creates concerns (ActiveSupport::Concern modules) for shared behavior with specs
 
 ## TDD Workflow
 
-### Step 1: Create Concern Spec (RED)
+### Step 1: Create Concern Test (RED)
 
 For **Model Concerns**, test via a model that includes it:
 
 ```ruby
-# spec/models/concerns/[concern_name]_spec.rb
-RSpec.describe [ConcernName] do
-  # Create a test class that includes the concern
-  let(:test_class) do
-    Class.new(ApplicationRecord) do
-      self.table_name = "events"  # Use existing table
-      include [ConcernName]
+# test/models/concerns/[concern_name]_test.rb
+require "test_helper"
+
+class ConcernNameTest < ActiveSupport::TestCase
+  setup do
+    @test_class = Class.new(ApplicationRecord) do
+      self.table_name = "events"
+      include ConcernName
     end
+    @instance = @test_class.new
   end
 
-  let(:instance) { test_class.new }
-
-  describe "included behavior" do
-    it "adds the expected methods" do
-      expect(instance).to respond_to(:method_from_concern)
-    end
+  test "adds the expected methods" do
+    assert_respond_to @instance, :method_from_concern
   end
 
-  describe "#method_from_concern" do
-    it "behaves as expected" do
-      expect(instance.method_from_concern).to eq(expected_value)
-    end
+  test "#method_from_concern behaves as expected" do
+    assert_equal expected_value, @instance.method_from_concern
   end
 
-  describe "class methods" do
-    it "adds scope" do
-      expect(test_class).to respond_to(:scope_name)
-    end
+  test "adds scope" do
+    assert_respond_to @test_class, :scope_name
   end
 end
 ```
@@ -71,44 +65,42 @@ end
 Alternative: Test through an actual model that uses the concern:
 
 ```ruby
-# spec/models/event_spec.rb
-RSpec.describe Event, type: :model do
-  describe "[ConcernName] behavior" do
-    describe "#method_from_concern" do
-      let(:event) { build(:event) }
+# test/models/event_test.rb
+require "test_helper"
 
-      it "does something" do
-        expect(event.method_from_concern).to eq(expected)
-      end
-    end
+class EventConcernBehaviorTest < ActiveSupport::TestCase
+  test "#method_from_concern does something" do
+    event = events(:one)
+    assert_equal expected, event.method_from_concern
   end
 end
 ```
 
-For **Controller Concerns**, test via request specs:
+For **Controller Concerns**, test via controller tests:
 
 ```ruby
-# spec/requests/[feature]_spec.rb
-RSpec.describe "[Feature]", type: :request do
-  describe "pagination (from Paginatable concern)" do
-    let(:user) { create(:user) }
-    before { sign_in user }
+# test/controllers/[feature]_controller_test.rb
+require "test_helper"
 
-    it "paginates results" do
-      create_list(:resource, 30, account: user.account)
-      get resources_path
-      expect(response.body).to include("page")
-    end
+class ResourcesControllerPaginationTest < ActionDispatch::IntegrationTest
+  setup do
+    @user = users(:one)
+    sign_in @user
+  end
+
+  test "paginates results" do
+    get resources_path
+    assert_includes response.body, "page"
   end
 end
 ```
 
-### Step 2: Run Spec (Confirm RED)
+### Step 2: Run Test (Confirm RED)
 
 ```bash
-bundle exec rspec spec/models/concerns/[concern_name]_spec.rb
+bin/rails test test/models/concerns/concern_name_test.rb
 # OR
-bundle exec rspec spec/models/[model]_spec.rb
+bin/rails test test/models/event_test.rb
 ```
 
 ### Step 3: Implement Concern (GREEN)
@@ -180,10 +172,10 @@ module [ConcernName]
 end
 ```
 
-### Step 4: Run Spec (Confirm GREEN)
+### Step 4: Run Test (Confirm GREEN)
 
 ```bash
-bundle exec rspec spec/models/concerns/[concern_name]_spec.rb
+bin/rails test test/models/concerns/concern_name_test.rb
 ```
 
 ## Common Concern Patterns
@@ -322,11 +314,15 @@ end
 
 ## Checklist
 
-- [ ] Spec written first (RED)
+- [ ] Test written first (RED)
 - [ ] Uses `extend ActiveSupport::Concern`
 - [ ] `included` block for callbacks/validations/scopes
 - [ ] `class_methods` block for class-level methods
 - [ ] Instance methods outside blocks
 - [ ] Single responsibility (one purpose per concern)
 - [ ] Well-named (describes what it adds)
-- [ ] All specs GREEN
+- [ ] All tests GREEN
+
+## Additional Resources
+
+- [Domain Patterns](reference/domain-patterns.md) — State management, association, behavior, and event tracking concern patterns; controller concerns for scoping, filtering, and timezone; naming conventions, composition, and testing strategies

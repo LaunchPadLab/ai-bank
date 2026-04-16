@@ -468,53 +468,61 @@ en:
 ### Missing Translation Detection
 
 ```ruby
-# spec/rails_helper.rb
-RSpec.configure do |config|
-  config.around(:each) do |example|
+# test/test_helper.rb
+class ActiveSupport::TestCase
+  setup do
     I18n.exception_handler = ->(exception, *) { raise exception }
-    example.run
+  end
+
+  teardown do
     I18n.exception_handler = I18n::ExceptionHandler.new
   end
 end
 ```
 
-### Translation Spec
+### Translation Test
 
 ```ruby
-# spec/i18n_spec.rb
+# test/i18n_test.rb
+require "test_helper"
 require "i18n/tasks"
 
-RSpec.describe "I18n" do
-  let(:i18n) { I18n::Tasks::BaseTask.new }
-
-  it "has no missing translations" do
-    missing = i18n.missing_keys
-    expect(missing).to be_empty, "Missing translations:\n#{missing.inspect}"
+class I18nTest < ActiveSupport::TestCase
+  setup do
+    @i18n = I18n::Tasks::BaseTask.new
   end
 
-  it "has no unused translations" do
-    unused = i18n.unused_keys
-    expect(unused).to be_empty, "Unused translations:\n#{unused.inspect}"
+  test "has no missing translations" do
+    missing = @i18n.missing_keys
+    assert missing.empty?, "Missing translations:\n#{missing.inspect}"
   end
 
-  it "files are normalized" do
-    non_normalized = i18n.non_normalized_paths
-    expect(non_normalized).to be_empty, "Non-normalized files:\n#{non_normalized.inspect}"
+  test "has no unused translations" do
+    unused = @i18n.unused_keys
+    assert unused.empty?, "Unused translations:\n#{unused.inspect}"
+  end
+
+  test "files are normalized" do
+    non_normalized = @i18n.non_normalized_paths
+    assert non_normalized.empty?, "Non-normalized files:\n#{non_normalized.inspect}"
   end
 end
 ```
 
-### View Translation Spec
+### View Translation Test
 
 ```ruby
-RSpec.describe "events/index", type: :view do
-  it "uses translations" do
+# test/views/events_index_test.rb
+require "test_helper"
+
+class EventsIndexViewTest < ActionView::TestCase
+  test "uses translations" do
     assign(:events, [])
 
     render
 
-    expect(rendered).to include(I18n.t("events.index.title"))
-    expect(rendered).to include(I18n.t("events.index.no_events"))
+    assert_includes rendered, I18n.t("events.index.title")
+    assert_includes rendered, I18n.t("events.index.no_events")
   end
 end
 ```

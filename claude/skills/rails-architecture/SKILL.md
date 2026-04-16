@@ -34,7 +34,7 @@ Where should this code go?
 │   └─ → ViewComponent (see: viewcomponent-patterns skill)
 │
 ├─ Is it async/background work?
-│   └─ → Job (see: solid-queue-setup skill)
+│   └─ → Job (see: sidekiq-setup skill)
 │
 ├─ Is it a complex form (multi-model, wizard)?
 │   └─ → Form Object (see: form-object-patterns skill)
@@ -99,7 +99,7 @@ ASYNC FLOWS:
 ┌─────────────────────┐       ┌─────────────────────┐
 │        JOB          │       │      CHANNEL        │
 │  • Background work  │       │  • Real-time        │
-│  • Solid Queue      │       │  • WebSockets       │
+│  • Sidekiq          │       │  • WebSockets       │
 └─────────────────────┘       └─────────────────────┘
 
 EMAIL FLOWS:
@@ -138,7 +138,7 @@ app/
 │   └── concerns/        # Shared controller behavior
 ├── forms/               # Form objects
 ├── helpers/             # Simple view helpers (avoid)
-├── jobs/                # Background jobs (Solid Queue)
+├── jobs/                # Background jobs (Sidekiq)
 ├── mailers/             # Action Mailer classes
 ├── models/
 │   └── concerns/        # Shared model behavior
@@ -371,21 +371,21 @@ Uses `has_secure_password` with Session model, Current class, and password reset
 
 → See **authentication-flow** skill for details.
 
-### Background Jobs (Solid Queue)
+### Background Jobs (Sidekiq)
 
-Database-backed job processing, no Redis required.
+Redis-backed job processing via Sidekiq.
 
-→ See **solid-queue-setup** skill for details.
+→ See **sidekiq-setup** skill for details.
 
-### Real-time (Action Cable + Solid Cable)
+### Real-time (Action Cable + Redis)
 
-WebSocket support with database-backed adapter.
+WebSocket support with Redis adapter.
 
 → See **action-cable-patterns** skill for details.
 
-### Caching (Solid Cache)
+### Caching (Redis)
 
-Database-backed caching, no Redis required.
+Redis-backed caching via `redis_cache_store`.
 
 → See **caching-strategies** skill for details.
 
@@ -464,7 +464,7 @@ Database-backed caching, no Redis required.
 | **Presentation** | rails-presenter, viewcomponent-patterns |
 | **Controllers** | rails-controller, api-versioning |
 | **Auth** | authentication-flow, authorization-pundit |
-| **Background** | solid-queue-setup, action-mailer-patterns |
+| **Background** | sidekiq-setup, action-mailer-patterns |
 | **Real-time** | action-cable-patterns, hotwire-patterns |
 | **Performance** | caching-strategies, performance-optimization |
 | **I18n** | i18n-patterns |

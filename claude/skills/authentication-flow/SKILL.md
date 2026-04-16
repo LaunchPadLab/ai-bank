@@ -209,50 +209,45 @@ end
 
 ## Testing Authentication
 
-### Request Specs
+### Request Tests
 
 ```ruby
-# spec/requests/sessions_spec.rb
-RSpec.describe "Sessions", type: :request do
-  let(:user) { create(:user, password: "password123") }
+# test/requests/sessions_test.rb
+require "test_helper"
 
-  describe "POST /session" do
-    context "with valid credentials" do
-      it "signs in the user" do
-        post session_path, params: {
-          email_address: user.email_address,
-          password: "password123"
-        }
-
-        expect(response).to redirect_to(root_path)
-        expect(cookies[:session_token]).to be_present
-      end
-    end
-
-    context "with invalid credentials" do
-      it "shows error" do
-        post session_path, params: {
-          email_address: user.email_address,
-          password: "wrong"
-        }
-
-        expect(response).to have_http_status(:unprocessable_entity)
-      end
-    end
+class SessionsTest < ActionDispatch::IntegrationTest
+  setup do
+    @user = users(:one)
   end
 
-  describe "DELETE /session" do
-    it "signs out the user" do
-      # First sign in
-      post session_path, params: {
-        email_address: user.email_address,
-        password: "password123"
-      }
+  test "signs in with valid credentials" do
+    post session_path, params: {
+      email_address: @user.email_address,
+      password: "password123"
+    }
 
-      delete session_path
+    assert_redirected_to root_path
+    assert cookies[:session_token].present?
+  end
 
-      expect(response).to redirect_to(root_path)
-    end
+  test "rejects invalid credentials" do
+    post session_path, params: {
+      email_address: @user.email_address,
+      password: "wrong"
+    }
+
+    assert_response :unprocessable_entity
+  end
+
+  test "signs out the user" do
+    post session_path, params: {
+      email_address: @user.email_address,
+      password: "password123"
+    }
+
+    delete session_path
+
+    assert_redirected_to root_path
   end
 end
 ```
@@ -260,7 +255,7 @@ end
 ### Test Helper
 
 ```ruby
-# spec/support/authentication_helpers.rb
+# test/support/authentication_helpers.rb
 module AuthenticationHelpers
   def sign_in(user)
     session = user.sessions.create!
@@ -272,41 +267,39 @@ module AuthenticationHelpers
   end
 end
 
-RSpec.configure do |config|
-  config.include AuthenticationHelpers, type: :request
-  config.include AuthenticationHelpers, type: :system
-end
+# In test/test_helper.rb:
+# class ActionDispatch::IntegrationTest
+#   include AuthenticationHelpers
+# end
 ```
 
-### Protected Route Specs
+### Protected Route Tests
 
 ```ruby
-# spec/requests/posts_spec.rb
-RSpec.describe "Posts", type: :request do
-  let(:user) { create(:user) }
+# test/requests/posts_test.rb
+require "test_helper"
 
-  describe "GET /posts" do
-    context "when not authenticated" do
-      it "redirects to login" do
-        get posts_path
-        expect(response).to redirect_to(new_session_path)
-      end
-    end
+class PostsTest < ActionDispatch::IntegrationTest
+  setup do
+    @user = users(:one)
+  end
 
-    context "when authenticated" do
-      before { sign_in(user) }
+  test "redirects to login when not authenticated" do
+    get posts_path
+    assert_redirected_to new_session_path
+  end
 
-      it "shows posts" do
-        get posts_path
-        expect(response).to have_http_status(:ok)
-      end
-    end
+  test "shows posts when authenticated" do
+    sign_in(@user)
+    get posts_path
+    assert_response :ok
   end
 end
 ```
 
 ## References
 
+- See [domain-patterns.md](reference/domain-patterns.md) for Identity/Session/MagicLink models, Authentication concern, controllers, mailer, signup flow, and security patterns
 - See [sessions.md](reference/sessions.md) for session management details
 - See [current.md](reference/current.md) for Current attributes patterns
 

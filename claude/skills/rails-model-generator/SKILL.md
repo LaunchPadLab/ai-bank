@@ -1,6 +1,6 @@
 ---
 name: rails-model-generator
-description: Creates Rails models using TDD approach - spec first, then migration, then model. Use when creating new models, adding model validations, defining associations, or setting up database tables.
+description: Creates Rails models using TDD approach - test first, then migration, then model. Use when creating new models, adding model validations, defining associations, or setting up database tables.
 allowed-tools: Read, Write, Edit, Bash
 ---
 
@@ -10,10 +10,10 @@ allowed-tools: Read, Write, Edit, Bash
 
 This skill creates models the TDD way:
 1. Define requirements (attributes, validations, associations)
-2. Write model spec with expected behavior (RED)
-3. Create factory for test data
+2. Write model test with expected behavior (RED)
+3. Create fixtures for test data
 4. Generate migration
-5. Implement model to pass specs (GREEN)
+5. Implement model to pass tests (GREEN)
 6. Refactor if needed
 
 ## Workflow Checklist
@@ -21,15 +21,15 @@ This skill creates models the TDD way:
 ```
 Model Creation Progress:
 - [ ] Step 1: Define requirements (attributes, validations, associations)
-- [ ] Step 2: Create model spec (RED)
-- [ ] Step 3: Create factory
-- [ ] Step 4: Run spec (should fail - no model/table)
+- [ ] Step 2: Create model test (RED)
+- [ ] Step 3: Create fixtures
+- [ ] Step 4: Run test (should fail - no model/table)
 - [ ] Step 5: Generate migration
 - [ ] Step 6: Run migration
 - [ ] Step 7: Create model file (empty)
-- [ ] Step 8: Run spec (should fail - no validations)
+- [ ] Step 8: Run test (should fail - no validations)
 - [ ] Step 9: Add validations and associations
-- [ ] Step 10: Run spec (GREEN)
+- [ ] Step 10: Run test (GREEN)
 ```
 
 ## Step 1: Requirements Template
@@ -73,88 +73,101 @@ Before writing code, define the model:
 - after_create :send_welcome_email
 ```
 
-## Step 2: Create Model Spec
+## Step 2: Create Model Test
 
-Location: `spec/models/[model_name]_spec.rb`
+Location: `test/models/[model_name]_test.rb`
 
 ```ruby
 # frozen_string_literal: true
 
-require 'rails_helper'
+require "test_helper"
 
-RSpec.describe ModelName, type: :model do
-  subject { build(:model_name) }
-
+class ModelNameTest < ActiveSupport::TestCase
   # === Associations ===
-  describe 'associations' do
-    it { is_expected.to belong_to(:organization) }
-    it { is_expected.to have_many(:posts).dependent(:destroy) }
+  test "belongs to organization" do
+    record = model_names(:one)
+    assert_instance_of Organization, record.organization
+  end
+
+  test "has many posts" do
+    record = model_names(:one)
+    assert_respond_to record, :posts
+  end
+
+  test "destroys dependent posts" do
+    record = model_names(:one)
+    record.posts.create!(title: "Test")
+    assert_difference("Post.count", -1) { record.destroy }
   end
 
   # === Validations ===
-  describe 'validations' do
-    it { is_expected.to validate_presence_of(:name) }
-    it { is_expected.to validate_uniqueness_of(:email).case_insensitive }
-    it { is_expected.to validate_length_of(:name).is_at_most(100) }
+  test "requires name" do
+    record = ModelName.new(name: nil)
+    assert_not record.valid?
+    assert_includes record.errors[:name], "can't be blank"
+  end
+
+  test "requires unique email (case insensitive)" do
+    existing = model_names(:one)
+    record = ModelName.new(email: existing.email.upcase)
+    assert_not record.valid?
+  end
+
+  test "enforces max length on name" do
+    record = ModelName.new(name: "a" * 101)
+    assert_not record.valid?
   end
 
   # === Scopes ===
-  describe '.active' do
-    let!(:active_record) { create(:model_name, status: :active) }
-    let!(:inactive_record) { create(:model_name, status: :inactive) }
+  test ".active returns only active records" do
+    active_record = model_names(:active)
+    inactive_record = model_names(:inactive)
 
-    it 'returns only active records' do
-      expect(described_class.active).to include(active_record)
-      expect(described_class.active).not_to include(inactive_record)
-    end
+    result = ModelName.active
+
+    assert_includes result, active_record
+    assert_not_includes result, inactive_record
   end
 
   # === Instance Methods ===
-  describe '#full_name' do
-    subject { build(:model_name, first_name: 'John', last_name: 'Doe') }
-
-    it 'returns combined name' do
-      expect(subject.full_name).to eq('John Doe')
-    end
+  test "#full_name returns combined name" do
+    record = ModelName.new(first_name: "John", last_name: "Doe")
+    assert_equal "John Doe", record.full_name
   end
 end
 ```
 
-See [templates/model_spec.erb](templates/model_spec.erb) for full template.
+See [templates/model_test.erb](templates/model_test.erb) for full template.
 
-## Step 3: Create Factory
+## Step 3: Create Fixtures
 
-Location: `spec/factories/[model_name_plural].rb`
+Location: `test/fixtures/[model_name_plural].yml`
 
-```ruby
-# frozen_string_literal: true
+```yaml
+# test/fixtures/model_names.yml
+one:
+  name: "Test Name"
+  email: "user1@example.com"
+  status: 0
+  organization: one
 
-FactoryBot.define do
-  factory :model_name do
-    sequence(:name) { |n| "Name #{n}" }
-    sequence(:email) { |n| "user#{n}@example.com" }
-    status { :pending }
-    association :organization
+active:
+  name: "Active Record"
+  email: "active@example.com"
+  status: 1
+  organization: one
 
-    trait :active do
-      status { :active }
-    end
-
-    trait :with_posts do
-      after(:create) do |record|
-        create_list(:post, 3, model_name: record)
-      end
-    end
-  end
-end
+inactive:
+  name: "Inactive Record"
+  email: "inactive@example.com"
+  status: 2
+  organization: one
 ```
 
-See [templates/factory.erb](templates/factory.erb) for full template.
-
-## Step 4: Run Spec (Verify RED)
+## Step 4: Run Test (Verify RED)
 
 ```bash
-bundle exec rspec spec/models/model_name_spec.rb
+bin/rails test test/models/model_name_test.rb
 ```
 
 Expected: Failure because model/table doesn't exist.
@@ -215,10 +228,10 @@ class ModelName < ApplicationRecord
 end
 ```
 
-## Step 8: Run Spec (Still RED)
+## Step 8: Run Test (Still RED)
 
 ```bash
-bundle exec rspec spec/models/model_name_spec.rb
+bin/rails test test/models/model_name_test.rb
 ```
 
 Expected: Failures for missing validations/associations.
@@ -255,19 +268,19 @@ class ModelName < ApplicationRecord
 end
 ```
 
-## Step 10: Run Spec (GREEN)
+## Step 10: Run Test (GREEN)
 
 ```bash
-bundle exec rspec spec/models/model_name_spec.rb
+bin/rails test test/models/model_name_test.rb
 ```
 
-All specs should pass.
+All tests should pass.
 
 ## References
 
-- See [templates/model_spec.erb](templates/model_spec.erb) for spec template
-- See [templates/factory.erb](templates/factory.erb) for factory template
+- See [templates/model_test.erb](templates/model_test.erb) for test template
 - See [reference/validations.md](reference/validations.md) for validation patterns
+- See [reference/domain-patterns.md](reference/domain-patterns.md) for rich model philosophy, pattern catalog, associations, scopes, callbacks, enums, delegation, business logic methods, `_later`/`_now` convention, and Current usage
 
 ## Common Patterns
 

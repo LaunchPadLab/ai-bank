@@ -270,17 +270,21 @@ end
 ### Test Isolation
 
 ```ruby
-RSpec.describe ActiveEventsQuery do
-  let(:account) { create(:account) }
-  let(:other_account) { create(:account) }
+# test/queries/active_events_query_test.rb
+require "test_helper"
 
-  let!(:our_event) { create(:event, account: account) }
-  let!(:their_event) { create(:event, account: other_account) }
+class ActiveEventsQueryTest < ActiveSupport::TestCase
+  setup do
+    @account = accounts(:one)
+    @other_account = accounts(:two)
+    @our_event = events(:one)         # belongs to @account
+    @their_event = events(:other)     # belongs to @other_account
+  end
 
-  it "only returns events for the account" do
-    result = described_class.new(account: account).call
-    expect(result).to include(our_event)
-    expect(result).not_to include(their_event)
+  test "only returns events for the account" do
+    result = ActiveEventsQuery.new(account: @account).call
+    assert_includes result, @our_event
+    assert_not_includes result, @their_event
   end
 end
 ```

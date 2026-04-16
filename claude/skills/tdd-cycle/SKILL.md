@@ -2,9 +2,13 @@
 name: tdd-cycle
 description: Guides Test-Driven Development workflow with Red-Green-Refactor cycle. Use when the user wants to implement a feature using TDD, write tests first, follow test-driven practices, or mentions red-green-refactor.
 allowed-tools: Read, Write, Edit, Bash
+disable-model-invocation: true
+argument-hint: "[component-name]"
 ---
 
 # TDD Cycle Skill
+
+**Component to implement: $ARGUMENTS**
 
 ## Overview
 
@@ -20,13 +24,13 @@ Copy and track progress:
 ```
 TDD Progress:
 - [ ] Step 1: Understand the requirement
-- [ ] Step 2: Choose test type (unit/request/system)
-- [ ] Step 3: Write failing spec (RED)
-- [ ] Step 4: Verify spec fails correctly
+- [ ] Step 2: Choose test type (unit/controller/system)
+- [ ] Step 3: Write failing test (RED)
+- [ ] Step 4: Verify test fails correctly
 - [ ] Step 5: Implement minimal code (GREEN)
-- [ ] Step 6: Verify spec passes
+- [ ] Step 6: Verify test passes
 - [ ] Step 7: Refactor if needed
-- [ ] Step 8: Verify specs still pass
+- [ ] Step 8: Verify tests still pass
 ```
 
 ## Step 1: Requirement Analysis
@@ -43,70 +47,59 @@ Ask clarifying questions if requirements are ambiguous.
 
 | Test Type | Use For | Location | Example |
 |-----------|---------|----------|---------|
-| Model spec | Validations, scopes, instance methods | `spec/models/` | Testing `User#full_name` |
-| Request spec | API endpoints, HTTP responses | `spec/requests/` | Testing `POST /api/users` |
-| System spec | Full user flows with JavaScript | `spec/system/` | Testing login flow |
-| Service spec | Business logic, complex operations | `spec/services/` | Testing `CreateOrderService` |
-| Job spec | Background job behavior | `spec/jobs/` | Testing `SendEmailJob` |
+| Model test | Validations, scopes, instance methods | `test/models/` | Testing `User#full_name` |
+| Controller test | API endpoints, HTTP responses | `test/controllers/` | Testing `POST /api/users` |
+| System test | Full user flows with JavaScript | `test/system/` | Testing login flow |
+| Service test | Business logic, complex operations | `test/services/` | Testing `CreateOrderService` |
+| Job test | Background job behavior | `test/jobs/` | Testing `SendEmailJob` |
 
-## Step 3: Write Failing Spec (RED)
+## Step 3: Write Failing Test (RED)
 
-### Spec Structure
+### Test Structure
 
 ```ruby
 # frozen_string_literal: true
 
-require 'rails_helper'
+require "test_helper"
 
-RSpec.describe ClassName, type: :spec_type do
-  describe '#method_name' do
-    subject { described_class.new(args) }
+class ClassNameTest < ActiveSupport::TestCase
+  setup do
+    @instance = class_names(:one)
+  end
 
-    context 'when condition is met' do
-      let(:dependency) { create(:factory) }
+  test "method_name returns expected value when condition is met" do
+    assert_equal expected_value, @instance.method_name
+  end
 
-      it 'behaves as expected' do
-        expect(subject.method_name).to eq(expected_value)
-      end
-    end
-
-    context 'when edge case' do
-      it 'handles gracefully' do
-        expect { subject.method_name }.to raise_error(SpecificError)
-      end
-    end
+  test "method_name raises error on edge case" do
+    assert_raises(SpecificError) { @instance.method_name }
   end
 end
 ```
 
-### Good Spec Characteristics
+### Good Test Characteristics
 
-- **One behavior per example**: Each `it` block tests one thing
-- **Clear description**: Reads like a sentence when combined with `describe`/`context`
+- **One behavior per test**: Each `test` block tests one thing
+- **Clear description**: Test name reads as a sentence describing behavior
 - **Minimal setup**: Only create data needed for the specific test
-- **Fast execution**: Avoid unnecessary database hits, use `build` over `create` when possible
+- **Fast execution**: Avoid unnecessary database hits, use fixtures
 - **Independent**: Tests don't depend on order or shared state
-
-### Templates
-
-- See [unit_spec.erb](templates/unit_spec.erb) for model/service specs
-- See [request_spec.erb](templates/request_spec.erb) for API specs
 
 ## Step 4: Verify Failure
 
-Run the spec:
+Run the test:
 ```bash
-bundle exec rspec path/to/spec.rb --format documentation
+bin/rails test path/to/test.rb --verbose
 ```
 
-The spec MUST fail with a clear message indicating:
+The test MUST fail with a clear message indicating:
 - What was expected
 - What was received (or that the method/class doesn't exist)
 - Why it failed
 
-**Important**: If the spec passes immediately, you're not doing TDD. Either:
+**Important**: If the test passes immediately, you're not doing TDD. Either:
 - The behavior already exists (check if this is intentional)
-- The spec is wrong (not testing what you think)
+- The test is wrong (not testing what you think)
 
 ## Step 5: Implement (GREEN)
 
@@ -117,7 +110,6 @@ Write the MINIMUM code to pass:
 - Just make it work
 
 ```ruby
-# Start with the simplest thing that could work
 def full_name
   "#{first_name} #{last_name}"
 end
@@ -125,14 +117,14 @@ end
 
 ## Step 6: Verify Pass
 
-Run the spec again:
+Run the test again:
 ```bash
-bundle exec rspec path/to/spec.rb --format documentation
+bin/rails test path/to/test.rb --verbose
 ```
 
 It MUST pass. If it fails:
 1. Read the error carefully
-2. Fix the implementation (not the spec, unless the spec was wrong)
+2. Fix the implementation (not the test, unless the test was wrong)
 3. Run again
 
 ## Step 7: Refactor
@@ -147,52 +139,82 @@ Now improve the code while keeping tests green:
 
 ### Refactoring Rules
 1. Make ONE change at a time
-2. Run specs after EACH change
-3. If specs fail, undo and try different approach
+2. Run tests after EACH change
+3. If tests fail, undo and try different approach
 4. Stop when code is clean (don't over-engineer)
 
 ## Step 8: Final Verification
 
-Run all related specs:
+Run all related tests:
 ```bash
-bundle exec rspec spec/models/user_spec.rb
+bin/rails test test/models/user_test.rb
 ```
 
-All specs must pass. If any fail:
+All tests must pass. If any fail:
 - Undo recent changes
 - Try a different refactoring approach
-- Consider if the failing spec reveals a real bug
+- Consider if the failing test reveals a real bug
 
 ## Common Patterns
 
 ### Testing Validations
 
 ```ruby
-describe 'validations' do
-  it { is_expected.to validate_presence_of(:email) }
-  it { is_expected.to validate_uniqueness_of(:email).case_insensitive }
-  it { is_expected.to validate_length_of(:name).is_at_most(100) }
+class UserValidationTest < ActiveSupport::TestCase
+  test "requires email" do
+    user = User.new(email: nil)
+    assert_not user.valid?
+    assert_includes user.errors[:email], "can't be blank"
+  end
+
+  test "requires unique email (case insensitive)" do
+    existing = users(:one)
+    user = User.new(email: existing.email.upcase)
+    assert_not user.valid?
+  end
+
+  test "enforces max length on name" do
+    user = User.new(name: "a" * 101)
+    assert_not user.valid?
+    assert_includes user.errors[:name], "is too long (maximum is 100 characters)"
+  end
 end
 ```
 
 ### Testing Associations
 
 ```ruby
-describe 'associations' do
-  it { is_expected.to belong_to(:organization) }
-  it { is_expected.to have_many(:posts).dependent(:destroy) }
+class UserAssociationTest < ActiveSupport::TestCase
+  test "belongs to organization" do
+    user = users(:one)
+    assert_instance_of Organization, user.organization
+  end
+
+  test "has many posts" do
+    user = users(:one)
+    assert_respond_to user, :posts
+  end
+
+  test "destroys dependent posts" do
+    user = users(:one)
+    user.posts.create!(title: "Test")
+    assert_difference("Post.count", -1) { user.destroy }
+  end
 end
 ```
 
 ### Testing Scopes
 
 ```ruby
-describe '.active' do
-  let!(:active_user) { create(:user, status: :active) }
-  let!(:inactive_user) { create(:user, status: :inactive) }
+class UserScopeTest < ActiveSupport::TestCase
+  test ".active returns only active users" do
+    active_user = users(:active)
+    inactive_user = users(:inactive)
 
-  it 'returns only active users' do
-    expect(User.active).to contain_exactly(active_user)
+    result = User.active
+
+    assert_includes result, active_user
+    assert_not_includes result, inactive_user
   end
 end
 ```
@@ -200,27 +222,25 @@ end
 ### Testing Service Objects
 
 ```ruby
-describe '#call' do
-  subject(:result) { described_class.new.call(params) }
+class CreateOrderServiceTest < ActiveSupport::TestCase
+  setup do
+    @params = { email: "test@example.com" }
+  end
 
-  context 'with valid params' do
-    let(:params) { { email: 'test@example.com' } }
+  test "returns success with valid params" do
+    result = CreateOrderService.new.call(@params)
+    assert result.success?
+  end
 
-    it 'returns success' do
-      expect(result).to be_success
-    end
-
-    it 'creates a user' do
-      expect { result }.to change(User, :count).by(1)
+  test "creates a user with valid params" do
+    assert_difference("User.count", 1) do
+      CreateOrderService.new.call(@params)
     end
   end
 
-  context 'with invalid params' do
-    let(:params) { { email: '' } }
-
-    it 'returns failure' do
-      expect(result).to be_failure
-    end
+  test "returns failure with invalid params" do
+    result = CreateOrderService.new.call(email: "")
+    assert result.failure?
   end
 end
 ```
@@ -228,7 +248,7 @@ end
 ## Anti-Patterns to Avoid
 
 1. **Testing implementation, not behavior**: Test what it does, not how
-2. **Too many assertions**: Split into separate examples
+2. **Too many assertions**: Split into separate test methods
 3. **Brittle tests**: Don't test exact error messages or timestamps
-4. **Slow tests**: Use `build` over `create`, mock external services
-5. **Mystery guests**: Make test data explicit, not hidden in factories
+4. **Slow tests**: Use fixtures, mock external services
+5. **Mystery guests**: Make test data explicit, not hidden in unrelated fixtures

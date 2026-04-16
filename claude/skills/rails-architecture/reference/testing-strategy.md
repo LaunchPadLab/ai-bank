@@ -4,289 +4,293 @@
 
 ```
         /\
-       /  \  System Specs (few)
+       /  \  System Tests (few)
       /----\
-     /      \  Request Specs (moderate)
+     /      \  Integration Tests (moderate)
     /--------\
-   /          \  Unit Specs (many)
+   /          \  Unit Tests (many)
   --------------
   Models, Services, Queries, Presenters
 ```
 
 ## Unit Tests
 
-### Model Specs
+### Model Tests
 
 Test validations, scopes, and instance methods:
 
 ```ruby
-# spec/models/event_spec.rb
-RSpec.describe Event, type: :model do
-  describe "validations" do
-    it { is_expected.to validate_presence_of(:name) }
-    it { is_expected.to validate_presence_of(:event_date) }
+# test/models/event_test.rb
+require "test_helper"
+
+class EventTest < ActiveSupport::TestCase
+  test "validates presence of name" do
+    event = Event.new(event_date: 1.week.from_now, account: accounts(:one))
+    assert_not event.valid?
+    assert_includes event.errors[:name], "can't be blank"
   end
 
-  describe "associations" do
-    it { is_expected.to belong_to(:account) }
-    it { is_expected.to have_many(:vendors).through(:event_vendors) }
+  test "validates presence of event_date" do
+    event = Event.new(name: "Test", account: accounts(:one))
+    assert_not event.valid?
+    assert_includes event.errors[:event_date], "can't be blank"
   end
 
-  describe "scopes" do
-    describe ".upcoming" do
-      let!(:past_event) { create(:event, event_date: 1.day.ago) }
-      let!(:future_event) { create(:event, event_date: 1.day.from_now) }
-
-      it "returns only future events" do
-        expect(described_class.upcoming).to contain_exactly(future_event)
-      end
-    end
+  test "belongs to account" do
+    event = events(:one)
+    assert_respond_to event, :account
+    assert_instance_of Account, event.account
   end
 
-  describe "#days_until" do
-    it "returns days until event" do
-      event = build(:event, event_date: 5.days.from_now)
-      expect(event.days_until).to eq(5)
-    end
+  test "has many vendors through event_vendors" do
+    event = events(:one)
+    assert_respond_to event, :vendors
+  end
+
+  test ".upcoming returns only future events" do
+    past_event = events(:past)
+    future_event = events(:upcoming)
+
+    result = Event.upcoming
+    assert_includes result, future_event
+    assert_not_includes result, past_event
+  end
+
+  test "#days_until returns days until event" do
+    event = Event.new(event_date: 5.days.from_now.to_date)
+    assert_equal 5, event.days_until
   end
 end
 ```
 
-### Service Specs
+### Service Tests
 
 Test business logic and error handling:
 
 ```ruby
-# spec/services/orders/create_service_spec.rb
-RSpec.describe Orders::CreateService do
-  subject(:service) { described_class.new }
+# test/services/orders/create_service_test.rb
+require "test_helper"
 
-  let(:user) { create(:user) }
-  let(:product) { create(:product, inventory: 10) }
+class Orders::CreateServiceTest < ActiveSupport::TestCase
+  setup do
+    @service = Orders::CreateService.new
+    @user = users(:one)
+    @product = products(:widget)
+  end
 
-  describe "#call" do
-    context "with valid params" do
-      let(:params) { { user: user, items: [{ product_id: product.id, quantity: 2 }] } }
+  test "returns success with valid params" do
+    params = { user: @user, items: [{ product_id: @product.id, quantity: 2 }] }
+    result = @service.call(**params)
+    assert result.success?
+  end
 
-      it "returns success" do
-        expect(service.call(**params)).to be_success
-      end
-
-      it "creates an order" do
-        expect { service.call(**params) }.to change(Order, :count).by(1)
-      end
-
-      it "returns the order" do
-        result = service.call(**params)
-        expect(result.data).to be_a(Order)
-      end
+  test "creates an order with valid params" do
+    params = { user: @user, items: [{ product_id: @product.id, quantity: 2 }] }
+    assert_difference "Order.count", 1 do
+      @service.call(**params)
     end
+  end
 
-    context "with empty items" do
-      let(:params) { { user: user, items: [] } }
+  test "returns the order on success" do
+    params = { user: @user, items: [{ product_id: @product.id, quantity: 2 }] }
+    result = @service.call(**params)
+    assert_instance_of Order, result.data
+  end
 
-      it "returns failure" do
-        expect(service.call(**params)).to be_failure
-      end
+  test "returns failure with empty items" do
+    params = { user: @user, items: [] }
+    result = @service.call(**params)
+    assert result.failure?
+    assert_equal :empty_cart, result.code
+  end
 
-      it "returns error code" do
-        expect(service.call(**params).code).to eq(:empty_cart)
-      end
-
-      it "does not create order" do
-        expect { service.call(**params) }.not_to change(Order, :count)
-      end
+  test "does not create order with empty items" do
+    params = { user: @user, items: [] }
+    assert_no_difference "Order.count" do
+      @service.call(**params)
     end
+  end
 
-    context "with insufficient inventory" do
-      let(:params) { { user: user, items: [{ product_id: product.id, quantity: 100 }] } }
-
-      it "returns failure with code" do
-        result = service.call(**params)
-        expect(result).to be_failure
-        expect(result.code).to eq(:out_of_stock)
-      end
-    end
+  test "returns failure with insufficient inventory" do
+    params = { user: @user, items: [{ product_id: @product.id, quantity: 100 }] }
+    result = @service.call(**params)
+    assert result.failure?
+    assert_equal :out_of_stock, result.code
   end
 end
 ```
 
-### Query Specs
+### Query Tests
 
 Test query results and tenant isolation:
 
 ```ruby
-# spec/queries/active_events_query_spec.rb
-RSpec.describe ActiveEventsQuery do
-  subject(:query) { described_class.new(account: account) }
+# test/queries/active_events_query_test.rb
+require "test_helper"
 
-  let(:account) { create(:account) }
-  let(:other_account) { create(:account) }
+class ActiveEventsQueryTest < ActiveSupport::TestCase
+  setup do
+    @account = accounts(:one)
+    @other_account = accounts(:two)
+    @active_event = events(:active)
+    @inactive_event = events(:cancelled)
+    @other_event = events(:other_account_active)
+  end
 
-  describe "#call" do
-    let!(:active_event) { create(:event, account: account, status: :active) }
-    let!(:inactive_event) { create(:event, account: account, status: :cancelled) }
-    let!(:other_event) { create(:event, account: other_account, status: :active) }
+  test "returns active events for account" do
+    query = ActiveEventsQuery.new(account: @account)
+    assert_includes query.call, @active_event
+  end
 
-    it "returns active events for account" do
-      expect(query.call).to include(active_event)
-    end
+  test "excludes inactive events" do
+    query = ActiveEventsQuery.new(account: @account)
+    assert_not_includes query.call, @inactive_event
+  end
 
-    it "excludes inactive events" do
-      expect(query.call).not_to include(inactive_event)
-    end
-
-    it "excludes other account events (tenant isolation)" do
-      expect(query.call).not_to include(other_event)
-    end
+  test "excludes other account events (tenant isolation)" do
+    query = ActiveEventsQuery.new(account: @account)
+    assert_not_includes query.call, @other_event
   end
 end
 ```
 
-### Presenter Specs
+### Presenter Tests
 
 Test formatting and HTML output:
 
 ```ruby
-# spec/presenters/event_presenter_spec.rb
-RSpec.describe EventPresenter do
-  let(:event) { create(:event, name: "Test Event", status: :confirmed) }
-  let(:presenter) { described_class.new(event) }
+# test/presenters/event_presenter_test.rb
+require "test_helper"
 
-  describe "delegation" do
-    it "delegates to model" do
-      expect(presenter.name).to eq("Test Event")
-    end
+class EventPresenterTest < ActiveSupport::TestCase
+  setup do
+    @event = events(:confirmed)
+    @presenter = EventPresenter.new(@event)
   end
 
-  describe "#status_badge" do
-    it "returns HTML-safe string" do
-      expect(presenter.status_badge).to be_html_safe
-    end
-
-    it "includes status text" do
-      expect(presenter.status_badge).to include("Confirmed")
-    end
-
-    it "uses correct color for confirmed" do
-      expect(presenter.status_badge).to include("bg-green")
-    end
+  test "delegates to model" do
+    assert_equal @event.name, @presenter.name
   end
 
-  describe "#formatted_date" do
-    context "when date present" do
-      before { event.update(event_date: Date.new(2026, 7, 15)) }
+  test "status_badge returns HTML-safe string" do
+    assert_predicate @presenter.status_badge, :html_safe?
+  end
 
-      it "formats date" do
-        expect(presenter.formatted_date).to include("2026")
-      end
-    end
+  test "status_badge includes status text" do
+    assert_includes @presenter.status_badge, "Confirmed"
+  end
 
-    context "when date nil" do
-      before { event.update(event_date: nil) }
+  test "status_badge uses correct color for confirmed" do
+    assert_includes @presenter.status_badge, "bg-green"
+  end
 
-      it "returns placeholder" do
-        expect(presenter.formatted_date).to include("text-slate-400")
-      end
-    end
+  test "formatted_date formats date when present" do
+    assert_includes @presenter.formatted_date, @event.event_date.year.to_s
+  end
+
+  test "formatted_date returns placeholder when date nil" do
+    @event.update_columns(event_date: nil)
+    presenter = EventPresenter.new(@event.reload)
+    assert_includes presenter.formatted_date, "text-slate-400"
   end
 end
 ```
 
 ## Integration Tests
 
-### Request Specs
+### Request Tests
 
 Test HTTP flow and response:
 
 ```ruby
-# spec/requests/events_spec.rb
-RSpec.describe "Events", type: :request do
-  let(:user) { create(:user) }
-  let(:account) { user.account }
+# test/integration/events_test.rb
+require "test_helper"
 
-  before { sign_in user }
+class EventsTest < ActionDispatch::IntegrationTest
+  setup do
+    @user = users(:one)
+    @account = @user.account
+    @event = events(:one)
+    sign_in @user
+  end
 
-  describe "GET /events" do
-    let!(:event) { create(:event, account: account) }
-    let!(:other_event) { create(:event) } # Different account
+  test "GET /events returns success" do
+    get events_path
+    assert_response :ok
+  end
 
-    it "returns success" do
-      get events_path
-      expect(response).to have_http_status(:ok)
-    end
+  test "GET /events shows user's events" do
+    get events_path
+    assert_includes response.body, @event.name
+  end
 
-    it "shows user's events" do
-      get events_path
-      expect(response.body).to include(event.name)
-    end
+  test "GET /events does not show other accounts' events" do
+    other_event = events(:other_account)
+    get events_path
+    assert_not_includes response.body, other_event.name
+  end
 
-    it "does not show other accounts' events" do
-      get events_path
-      expect(response.body).not_to include(other_event.name)
+  test "POST /events creates event" do
+    valid_params = { event: { name: "New Event", event_date: 1.week.from_now } }
+    assert_difference "Event.count", 1 do
+      post events_path, params: valid_params
     end
   end
 
-  describe "POST /events" do
-    let(:valid_params) { { event: { name: "New Event", event_date: 1.week.from_now } } }
+  test "POST /events redirects to event" do
+    valid_params = { event: { name: "New Event", event_date: 1.week.from_now } }
+    post events_path, params: valid_params
+    assert_redirected_to Event.last
+  end
 
-    it "creates event" do
-      expect {
-        post events_path, params: valid_params
-      }.to change(Event, :count).by(1)
-    end
-
-    it "redirects to event" do
-      post events_path, params: valid_params
-      expect(response).to redirect_to(Event.last)
-    end
-
-    context "with invalid params" do
-      let(:invalid_params) { { event: { name: "" } } }
-
-      it "renders form with errors" do
-        post events_path, params: invalid_params
-        expect(response).to have_http_status(:unprocessable_entity)
-      end
-    end
+  test "POST /events renders form with errors for invalid params" do
+    invalid_params = { event: { name: "" } }
+    post events_path, params: invalid_params
+    assert_response :unprocessable_entity
   end
 end
 ```
 
-### Policy Specs
+### Policy Tests
 
 Test authorization rules:
 
 ```ruby
-# spec/policies/event_policy_spec.rb
-RSpec.describe EventPolicy do
-  subject { described_class.new(user, event) }
+# test/policies/event_policy_test.rb
+require "test_helper"
 
-  let(:account) { create(:account) }
-  let(:event) { create(:event, account: account) }
-
-  context "user owns event" do
-    let(:user) { create(:user, account: account) }
-
-    it { is_expected.to permit_actions([:show, :edit, :update, :destroy]) }
+class EventPolicyTest < ActiveSupport::TestCase
+  setup do
+    @account = accounts(:one)
+    @event = events(:one)
   end
 
-  context "user from different account" do
-    let(:user) { create(:user) }
+  test "owner can show, edit, update, and destroy" do
+    user = users(:one)
+    policy = EventPolicy.new(user, @event)
 
-    it { is_expected.to forbid_actions([:show, :edit, :update, :destroy]) }
+    assert policy.show?
+    assert policy.edit?
+    assert policy.update?
+    assert policy.destroy?
   end
 
-  describe "Scope" do
-    let(:user) { create(:user, account: account) }
-    let!(:own_event) { create(:event, account: account) }
-    let!(:other_event) { create(:event) }
+  test "user from different account is forbidden" do
+    other_user = users(:other_account)
+    policy = EventPolicy.new(other_user, @event)
 
-    it "returns only own events" do
-      scope = described_class::Scope.new(user, Event).resolve
-      expect(scope).to include(own_event)
-      expect(scope).not_to include(other_event)
-    end
+    assert_not policy.show?
+    assert_not policy.edit?
+    assert_not policy.update?
+    assert_not policy.destroy?
+  end
+
+  test "scope returns only own events" do
+    user = users(:one)
+    scope = EventPolicy::Scope.new(user, Event).resolve
+
+    assert_includes scope, @event
+    assert_not_includes scope, events(:other_account)
   end
 end
 ```
@@ -296,13 +300,16 @@ end
 Test critical user journeys:
 
 ```ruby
-# spec/system/create_event_spec.rb
-RSpec.describe "Creating an event", type: :system do
-  let(:user) { create(:user) }
+# test/system/create_event_test.rb
+require "application_system_test_case"
 
-  before { sign_in user }
+class CreateEventTest < ApplicationSystemTestCase
+  setup do
+    @user = users(:one)
+    sign_in @user
+  end
 
-  it "creates event successfully" do
+  test "creates event successfully" do
     visit new_event_path
 
     fill_in "Name", with: "Company Party"
@@ -311,101 +318,112 @@ RSpec.describe "Creating an event", type: :system do
 
     click_button "Create Event"
 
-    expect(page).to have_content("Event was successfully created")
-    expect(page).to have_content("Company Party")
+    assert_text "Event was successfully created"
+    assert_text "Company Party"
   end
 
-  it "shows validation errors" do
+  test "shows validation errors" do
     visit new_event_path
 
     click_button "Create Event"
 
-    expect(page).to have_content("Name can't be blank")
+    assert_text "Name can't be blank"
   end
 end
 ```
 
-## Component Specs
+## Component Tests
 
 Test ViewComponents:
 
 ```ruby
-# spec/components/event_card_component_spec.rb
-RSpec.describe EventCardComponent, type: :component do
-  let(:event) { create(:event, name: "Test Event") }
+# test/components/event_card_component_test.rb
+require "test_helper"
 
-  it "renders event name" do
-    render_inline(described_class.new(event: event))
-    expect(page).to have_content("Test Event")
+class EventCardComponentTest < ViewComponent::TestCase
+  setup do
+    @event = events(:one)
   end
 
-  it "renders status badge" do
-    render_inline(described_class.new(event: event))
-    expect(page).to have_css(".badge")
+  test "renders event name" do
+    render_inline(EventCardComponent.new(event: @event))
+    assert_text @event.name
   end
 
-  context "with upcoming event" do
-    let(:event) { create(:event, event_date: 3.days.from_now) }
+  test "renders status badge" do
+    render_inline(EventCardComponent.new(event: @event))
+    assert_selector ".badge"
+  end
 
-    it "shows days until" do
-      render_inline(described_class.new(event: event))
-      expect(page).to have_content("3 days")
-    end
+  test "shows days until for upcoming event" do
+    upcoming = events(:upcoming)
+    render_inline(EventCardComponent.new(event: upcoming))
+    assert_text "days"
   end
 end
 ```
 
 ## Test Helpers
 
-### Shared Examples
+### Shared Test Modules
 
 ```ruby
-# spec/support/shared_examples/tenant_isolation.rb
-RSpec.shared_examples "tenant isolated" do
-  it "excludes other tenant data" do
-    other_account = create(:account)
-    other_record = create(factory, account: other_account)
+# test/support/tenant_isolation_test.rb
+module TenantIsolationTest
+  extend ActiveSupport::Concern
 
-    expect(subject).not_to include(other_record)
+  included do
+    test "excludes other tenant data" do
+      result = subject_query
+      assert_not_includes result.to_a, other_tenant_record
+    end
   end
 end
 
 # Usage
-RSpec.describe ActiveEventsQuery do
-  subject { described_class.new(account: account).call }
-  let(:account) { create(:account) }
-  let(:factory) { :event }
+# test/queries/active_events_query_test.rb
+class ActiveEventsQueryTest < ActiveSupport::TestCase
+  include TenantIsolationTest
 
-  it_behaves_like "tenant isolated"
+  private
+
+  def subject_query
+    ActiveEventsQuery.new(account: accounts(:one)).call
+  end
+
+  def other_tenant_record
+    events(:other_account)
+  end
 end
 ```
 
-### Factory Traits
+### Fixtures
 
-```ruby
-# spec/factories/events.rb
-FactoryBot.define do
-  factory :event do
-    account
-    name { Faker::Company.name }
-    event_date { 1.month.from_now }
-    status { :draft }
+```yaml
+# test/fixtures/events.yml
+one:
+  account: one
+  name: Annual Gala
+  event_date: <%= 1.month.from_now.to_date %>
+  status: 0
 
-    trait :confirmed do
-      status { :confirmed }
-    end
+confirmed:
+  account: one
+  name: Confirmed Event
+  event_date: <%= 2.months.from_now.to_date %>
+  status: 1
 
-    trait :past do
-      event_date { 1.month.ago }
-    end
+past:
+  account: one
+  name: Past Event
+  event_date: <%= 1.month.ago.to_date %>
+  status: 2
 
-    trait :with_vendors do
-      after(:create) do |event|
-        create_list(:event_vendor, 3, event: event)
-      end
-    end
-  end
-end
+other_account:
+  account: two
+  name: Other Account Event
+  event_date: <%= 1.month.from_now.to_date %>
+  status: 0
 ```
 
 ## Coverage Requirements
@@ -421,11 +439,11 @@ end
 ## Checklist
 
 - [ ] Unit tests for all models
-- [ ] Service specs cover success/failure paths
-- [ ] Query specs test tenant isolation
-- [ ] Request specs for all endpoints
-- [ ] Policy specs for authorization
-- [ ] System specs for critical flows
-- [ ] Component specs for ViewComponents
-- [ ] Shared examples for common patterns
-- [ ] Factory traits for common states
+- [ ] Service tests cover success/failure paths
+- [ ] Query tests check tenant isolation
+- [ ] Integration tests for all endpoints
+- [ ] Policy tests for authorization
+- [ ] System tests for critical flows
+- [ ] Component tests for ViewComponents
+- [ ] Shared test modules for common patterns
+- [ ] Fixtures for common states
