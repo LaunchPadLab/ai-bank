@@ -1,6 +1,6 @@
 ---
 name: rails-service-object
-description: Creates service objects following single-responsibility principle with comprehensive specs. Use when extracting business logic from controllers, creating complex operations, implementing interactors, or when user mentions service objects or POROs.
+description: Creates plain Rails service objects for orchestration, transactions, side effects, and external systems with focused Minitest coverage. Use when logic spans multiple models or entry points, not for model-local behavior or simple CRUD.
 allowed-tools: Read, Write, Edit, Bash
 ---
 
@@ -8,38 +8,39 @@ allowed-tools: Read, Write, Edit, Bash
 
 ## Overview
 
-Service objects encapsulate business logic:
+Service objects are plain Ruby collaborators for orchestration:
 - Single responsibility (one public method: `#call`)
 - Easy to test in isolation
 - Reusable across controllers, jobs, rake tasks
-- Clear input/output contract
-- Dependency injection for testability
+- Clear input/output contract when Rails validations and exceptions are not enough
+- Dependency injection only for real external boundaries
 
 ## When to Use Service Objects
 
 | Scenario | Use Service Object? |
 |----------|---------------------|
-| Complex business logic | Yes |
-| Multiple model interactions | Yes |
+| Cohesive behavior on one model | No (use the model) |
+| Simple CRUD operations | No (use controller/model) |
+| Single model validation or state transition | No (use the model) |
+| Multiple model interactions | Yes, when orchestration is clearer outside one aggregate |
 | External API calls | Yes |
-| Logic shared across controllers | Yes |
-| Simple CRUD operations | No (use model) |
-| Single model validation | No (use model) |
+| Cross-model transaction or side effects | Yes |
+| Logic shared across controllers/jobs | Yes |
 
 ## Workflow Checklist
 
 ```
 Service Object Progress:
 - [ ] Step 1: Define input/output contract
-- [ ] Step 2: Create service spec (RED)
-- [ ] Step 3: Run spec (fails - no service)
+- [ ] Step 2: Create service test (RED)
+- [ ] Step 3: Run test (fails - no service)
 - [ ] Step 4: Create service file with empty #call
-- [ ] Step 5: Run spec (fails - wrong return)
+- [ ] Step 5: Run test (fails - wrong return)
 - [ ] Step 6: Implement #call method
-- [ ] Step 7: Run spec (GREEN)
-- [ ] Step 8: Add error case specs
+- [ ] Step 7: Run test (GREEN)
+- [ ] Step 8: Add error case tests
 - [ ] Step 9: Implement error handling
-- [ ] Step 10: Final spec run
+- [ ] Step 10: Final test run
 ```
 
 ## Step 1: Define Contract
@@ -55,15 +56,15 @@ Creates a new order with inventory validation and payment processing.
 - items: Array<Hash> (required) - Items to order [{product_id:, quantity:}]
 - payment_method_id: Integer (optional) - Saved payment method
 
-### Output (Result object)
+### Output
+
+Prefer returning the domain object or letting Active Record validations/exceptions speak for themselves. Use a small result value only if the caller must branch on multiple failure modes.
+
 Success:
-- success?: true
-- data: Order instance
+- Order instance, or a result value with `success?`
 
 Failure:
-- success?: false
-- error: String (error message)
-- code: Symbol (error code for programmatic handling)
+- Active Record validation/exception, or a result value with `error` and optional `code`
 
 ### Dependencies
 - inventory_service: Checks product availability
@@ -143,6 +144,11 @@ Location: `app/services/orders/create_service.rb`
 # frozen_string_literal: true
 
 module Orders
+  Result = Data.define(:success, :data, :error, :code) do
+    def success? = success
+    def failure? = !success
+  end
+
   class CreateService
     def initialize(inventory_service: InventoryService.new,
                    payment_gateway: PaymentGateway.new)
@@ -209,35 +215,17 @@ module Orders
 end
 ```
 
-## Result Object
+## Optional Result Object
 
-Create a reusable Result class:
+Do not create a global result wrapper by default. If a service has meaningful recoverable failure modes, define a small value object close to the service or reuse an existing project-level result type.
 
 ```ruby
-# app/services/result.rb
 # frozen_string_literal: true
 
-class Result
-  attr_reader :data, :error, :code
-
-  def initialize(success:, data: nil, error: nil, code: nil)
-    @success = success
-    @data = data
-    @error = error
-    @code = code
-  end
-
-  def success?
-    @success
-  end
-
-  def failure?
-    !@success
-  end
-
-  # Allow pattern matching (Ruby 3+)
-  def deconstruct_keys(keys)
-    { success: @success, data: @data, error: @error, code: @code }
+module Orders
+  Result = Data.define(:success, :data, :error, :code) do
+    def success? = success
+    def failure? = !success
   end
 end
 ```
@@ -309,8 +297,6 @@ end
 
 ```
 app/services/
-├── result.rb                    # Shared Result class
-├── application_service.rb       # Optional base class
 ├── orders/
 │   ├── create_service.rb
 │   ├── cancel_service.rb
@@ -328,18 +314,18 @@ app/services/
 1. **Naming**: `VerbNounService` (e.g., `CreateOrderService`)
 2. **Location**: `app/services/[namespace]/[name]_service.rb`
 3. **Interface**: Single public method `#call`
-4. **Return**: Always return Result object
-5. **Dependencies**: Inject via constructor
-6. **Errors**: Catch and wrap, don't raise
+4. **Return**: Prefer a domain object, boolean, or existing project result type
+5. **Dependencies**: Inject only external boundaries or expensive collaborators
+6. **Errors**: Let Rails validations/exceptions stand unless the caller needs typed failures
 
 ## Anti-Patterns to Avoid
 
 1. **God service**: Too many responsibilities
 2. **Hidden dependencies**: Using globals instead of injection
 3. **No return contract**: Returning different types
-4. **Raising exceptions**: Use Result objects instead
-5. **Business logic in controller**: Extract to service
+4. **Result object ceremony**: Wrapping simple Active Record outcomes without a real caller need
+5. **Model-local behavior in services**: Put cohesive aggregate behavior on the model
 
 ## Additional Resources
 
-- [Domain Patterns](reference/domain-patterns.md) — ApplicationService base class with Data.define Result, CRUD/transaction/calculation/dependency-injection service patterns, side effect testing, and controller integration
+- [Domain Patterns](reference/domain-patterns.md) — transaction, dependency-injection, side-effect testing, and controller integration patterns for cases where a service object is justified

@@ -460,8 +460,8 @@ Rule: Operations >500ms should be async.
 
 ### Database/Models
 - [ ] Tables use UUIDs (not integer IDs)
-- [ ] All tables have account_id for multi-tenancy
-- [ ] No foreign key constraints (use soft references)
+- [ ] Tenant-scoped tables have indexed account_id
+- [ ] Ordinary associations use appropriate foreign keys; tenant ownership follows the account_id convention
 - [ ] State is records, not booleans
 - [ ] Models use rich domain logic (not service objects)
 - [ ] Concerns extract shared behavior
@@ -553,7 +553,7 @@ Structure feedback as:
 ### Reviewing a New Feature
 
 1. **Check architecture:** Does it follow CRUD philosophy? Are concerns used appropriately? Is business logic in models?
-2. **Check multi-tenancy:** All queries scope through Current.account? All tables have account_id? Tests verify account isolation?
+2. **Check multi-tenancy:** Tenant queries scope through Current.account? Tenant-scoped tables have account_id? Tests verify account isolation?
 3. **Check performance:** HTTP caching present? Slow operations in background jobs? Proper database indexes?
 4. **Check tests:** Uses Minitest and fixtures? Tests cover edge cases? System tests for workflows?
 

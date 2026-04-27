@@ -147,7 +147,7 @@ class [Resources]Controller < ApplicationController
   end
 
   def [resource]_params
-    params.require(:[resource]).permit(:name, :field1, :field2)
+    params.expect(resource: [ :name, :field1, :field2 ])
   end
 end
 ```

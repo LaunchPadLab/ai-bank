@@ -70,7 +70,7 @@ class BoardsController < ApplicationController
   end
 
   def board_params
-    params.require(:board).permit(:name, :description)
+    params.expect(board: [ :name, :description ])
   end
 end
 
@@ -143,7 +143,7 @@ class CardsController < ApplicationController
   end
 
   def card_params
-    params.require(:card).permit(:title, :description, :column_id)
+    params.expect(card: [ :title, :description, :column_id ])
   end
 end
 ```
@@ -441,7 +441,7 @@ class ApiTokensController < ApplicationController
   end
 
   def api_token_params
-    params.require(:api_token).permit(:name)
+    params.expect(api_token: [ :name ])
   end
 end
 ```
@@ -940,10 +940,10 @@ class Cards::BatchController < ApplicationController
   end
 
   def batch_params
-    params.require(:batch).permit(
+    params.expect(batch: [
       card_ids: [],
-      cards: [:id, :title, :description, :column_id]
-    )
+      cards: [[ :id, :title, :description, :column_id ]]
+    ])
   end
 end
 
@@ -994,7 +994,7 @@ class WebhooksController < ApplicationController
   private
 
   def webhook_params
-    params.require(:webhook_endpoint).permit(:url, events: [])
+    params.expect(webhook_endpoint: [ :url, events: [] ])
   end
 end
 

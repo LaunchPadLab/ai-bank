@@ -415,7 +415,7 @@ class BoardsController < ApplicationController
   end
 
   def board_params
-    params.require(:board).permit(:name, :description)
+    params.expect(board: [ :name, :description ])
   end
 end
 
@@ -454,7 +454,7 @@ class CardsController < ApplicationController
   end
 
   def card_params
-    params.require(:card).permit(:title, :description, :column_id)
+    params.expect(card: [ :title, :description, :column_id ])
   end
 end
 
@@ -538,7 +538,7 @@ class AccountsController < ApplicationController
   private
 
   def account_params
-    params.require(:account).permit(:name, :slug)
+    params.expect(account: [ :name, :slug ])
   end
 
   def find_last_accessed_account
@@ -650,7 +650,7 @@ class MembershipsController < ApplicationController
   private
 
   def membership_params
-    params.require(:membership).permit(:email, :role)
+    params.expect(membership: [ :email, :role ])
   end
 end
 

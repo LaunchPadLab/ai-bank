@@ -1,12 +1,11 @@
 # Error Handling Strategies
 
-## Result Object Pattern (Preferred)
+## Optional Result Object Pattern
 
-Services return Result objects instead of raising exceptions:
+Rails validations and exceptions are often enough. Use a small result object only when callers need to branch on recoverable failure modes without raising.
 
 ```ruby
-# app/services/result.rb
-class Result
+class CheckoutResult
   attr_reader :data, :error, :code
 
   def initialize(success:, data: nil, error: nil, code: nil)
@@ -244,7 +243,7 @@ end
 
 ## Validation Errors
 
-### Model Validations to Result
+### Model Validations with an Optional Result
 
 ```ruby
 def call(params)
@@ -284,7 +283,7 @@ end
 ## Logging Errors
 
 ```ruby
-class ApplicationService
+module ErrorLogging
   private
 
   def error(code, message = nil, exception: nil)
@@ -324,9 +323,9 @@ end
 
 ## Checklist
 
-- [ ] Services return Result objects
-- [ ] Error codes are typed symbols
-- [ ] Controllers handle errors by code
+- [ ] Services use result objects only when typed failures are useful
+- [ ] Error codes are typed symbols when callers branch on them
+- [ ] Controllers handle known errors by code
 - [ ] API responses have consistent format
 - [ ] Unexpected errors logged with context
 - [ ] Sensitive data not exposed in errors

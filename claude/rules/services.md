@@ -11,6 +11,6 @@ paths:
 - Do not create tiny wrapper services for mail delivery. Call mailers directly at the explicit call site unless delivery is part of broader orchestration.
 - Prefer direct model or controller code when it is clearer than adding another object.
 - Keep services plain: one public method (`#call`), explicit dependencies, and no framework-y DSL.
-- Prefer plain return values over custom result structs unless explicit status handling materially improves clarity.
+- Prefer plain return values and Rails exceptions/validations over custom result structs unless explicit status handling materially improves clarity.
 - Use transactions or `with_lock` inside the model or service that owns the state transition.
 - Test the real behavior at the boundary that matters: model for domain rules, controller for request flow, integration for end-to-end behavior.

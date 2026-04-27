@@ -300,7 +300,7 @@ class EmailPreferencesController < ApplicationController
   private
 
   def preference_params
-    params.require(:email_preference).permit(:enabled)
+    params.expect(email_preference: [ :enabled ])
   end
 end
 ```

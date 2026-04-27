@@ -10,10 +10,10 @@ user-invocable: false
 
 **Approach:**
 - URL-based: app.myapp.com/123/projects/456 (account_id in path)
-- account_id on every table (no foreign key constraints)
+- `account_id` on tenant-scoped tables with indexes and application-level account consistency
 - Current.account set from URL params for all requests
 - All queries scoped through Current.account
-- UUIDs everywhere (prevents enumeration attacks)
+- UUIDs where the app has chosen them (prevents enumeration attacks)
 - Default scopes avoided (explicit scoping preferred)
 
 **vs. Traditional Approaches:**
@@ -42,7 +42,7 @@ end
 # ✅ Explicit scoping
 Current.account.boards.find(params[:id])
 
-# ✅ account_id on every table with UUIDs
+# ✅ account_id on tenant-scoped tables with UUIDs
 create_table :cards, id: :uuid do |t|
   t.references :board, null: false, type: :uuid
   t.references :account, null: false, type: :uuid
@@ -65,8 +65,8 @@ end
 - Account membership controls access
 
 **Database:**
-- account_id on every table
-- No foreign key constraints (for flexibility)
+- account_id on tenant-scoped tables
+- Ordinary associations may use foreign keys; tenant ownership uses indexed account_id without a foreign key unless explicitly approved
 - UUIDs prevent enumeration
 - Single database, single schema
 

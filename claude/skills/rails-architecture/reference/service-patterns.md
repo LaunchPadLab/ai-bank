@@ -1,5 +1,7 @@
 # Service Object Patterns
 
+Use these patterns only when a plain model/controller implementation would mix unrelated responsibilities. Simple CRUD and cohesive aggregate behavior belong in Rails controllers and models.
+
 ## Basic Service Structure
 
 ```ruby
@@ -277,9 +279,9 @@ end
 ## Checklist
 
 - [ ] Single public method (`#call`)
-- [ ] Returns Result object
-- [ ] Dependencies injected via constructor
-- [ ] Errors caught and wrapped
+- [ ] Return contract matches caller needs
+- [ ] Dependencies injected only for real boundaries
+- [ ] Expected failures handled explicitly
 - [ ] Transaction for multi-model writes
-- [ ] Typed error codes for handling
-- [ ] Spec covers success and failure paths
+- [ ] Typed error codes only when callers branch on them
+- [ ] Minitest covers success and failure paths

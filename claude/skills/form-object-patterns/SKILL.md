@@ -32,10 +32,10 @@ Form objects encapsulate complex form logic:
 ```
 Form Object Progress:
 - [ ] Step 1: Define form requirements
-- [ ] Step 2: Write form object spec (RED)
-- [ ] Step 3: Run spec (fails)
+- [ ] Step 2: Write form object test (RED)
+- [ ] Step 3: Run test (fails)
 - [ ] Step 4: Create form object
-- [ ] Step 5: Run spec (GREEN)
+- [ ] Step 5: Run test (GREEN)
 - [ ] Step 6: Wire up controller
 - [ ] Step 7: Create view form
 ```
@@ -521,10 +521,10 @@ class RegistrationsController < ApplicationController
   private
 
   def registration_params
-    params.require(:registration).permit(
+    params.expect(registration: [
       :email, :password, :password_confirmation,
       :company_name, :phone
-    )
+    ])
   end
 end
 ```

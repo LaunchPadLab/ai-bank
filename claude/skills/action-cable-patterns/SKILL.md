@@ -657,7 +657,7 @@ end
 - [ ] Channel authorization implemented
 - [ ] Client-side subscription set up
 - [ ] Broadcasting from services/models
-- [ ] Channel specs written
+- [ ] Channel tests written
 - [ ] Error handling in place
 - [ ] Reconnection logic on client
 - [ ] Performance limits configured

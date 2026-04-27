@@ -39,6 +39,7 @@ Migration Safety:
 - [ ] Large tables use batching for updates
 - [ ] Indexes added concurrently (if needed)
 - [ ] Foreign keys have indexes
+- [ ] Tenant ownership columns follow the app's account-scoping convention
 - [ ] NOT NULL added in two steps (for existing columns)
 - [ ] Default values don't lock table
 - [ ] Tested rollback locally
@@ -103,7 +104,7 @@ class AddOrganizerToEvents < ActiveRecord::Migration[8.0]
 end
 ```
 
-For tenant ownership columns, follow the project's multi-tenant convention: keep `account_id` indexed, but do not add a database foreign key unless the project explicitly opts into hard tenant FKs for that table.
+Use ordinary foreign keys when they express normal referential integrity. For tenant ownership columns, follow the project's multi-tenant convention: keep `account_id` indexed, but do not add a database foreign key unless the project explicitly opts into hard tenant FKs for that table.
 
 ```ruby
 add_reference :events, :account, null: false, type: :uuid, foreign_key: false, index: true

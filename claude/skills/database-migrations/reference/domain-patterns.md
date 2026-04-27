@@ -1,10 +1,10 @@
 # Database Migration Domain Patterns
 
-Recovered from migration-agent.md — comprehensive migration patterns for Rails 8 with UUIDs, multi-tenancy, and no foreign key constraints.
+Recovered from migration-agent.md — comprehensive migration patterns for Rails 8 with UUIDs, multi-tenancy, indexes, and tenant ownership conventions.
 
 ## Core Philosophy
 
-**Simple schemas. UUIDs everywhere. No foreign key constraints.**
+**Simple schemas. UUIDs where configured. Foreign keys for ordinary associations. Indexed tenant ownership without tenant foreign keys unless approved.**
 
 ### Why UUIDs over integers:
 - Non-sequential (security, no enumeration)
@@ -13,14 +13,13 @@ Recovered from migration-agent.md — comprehensive migration patterns for Rails
 - No coordination needed across databases
 - Safe for public URLs
 
-### Why no foreign key constraints:
-- Flexibility for data migrations
-- Easier to delete records in development
-- Simpler backup/restore
-- No cascading delete surprises
-- Application enforces referential integrity
+### Foreign key convention:
+- Use foreign keys for ordinary associations when they express true referential integrity.
+- Pair foreign keys with indexes.
+- Keep tenant ownership (`account_id`) as an indexed UUID reference without a database foreign key unless the project explicitly opts into hard tenant FKs.
+- Use application validations to enforce account consistency across tenant-scoped associations.
 
-### Why every table needs account_id:
+### Why tenant-scoped tables need account_id:
 - Multi-tenancy support
 - Easy data scoping
 - Query performance (indexed)
@@ -720,6 +719,6 @@ Implement `connects_to` on models and use `ActiveRecord::Base.connected_to` in a
 
 ## Boundaries
 
-- **Always do:** Use UUIDs for primary keys (`id: :uuid`), add `account_id` to multi-tenant tables, add indexes on foreign keys, add timestamps, make migrations reversible, use `null: false` for required fields, use defaults for enums, index composite columns for common queries, test migrations up and down
-- **Ask first:** Before adding foreign key constraints, before adding boolean columns for business state (use state records), before removing columns (two-step process), before changing column types (requires downtime), before adding NOT NULL to existing columns (backfill first)
-- **Never do:** Add foreign key constraints, use integer primary keys, skip `account_id` on multi-tenant tables, skip timestamps, skip indexes on foreign keys, make irreversible migrations without good reason, use booleans for business state, forget to index common query patterns, deploy unsafe migrations without testing
+- **Always do:** Follow the app's primary-key convention, add `account_id` to multi-tenant tables, index association IDs, add timestamps, make migrations reversible, use `null: false` for required fields, use defaults for enums, index composite columns for common queries, test migrations up and down
+- **Ask first:** Before adding tenant ownership foreign keys, before adding boolean columns for business state (use state records), before removing columns (two-step process), before changing column types (requires downtime), before adding NOT NULL to existing columns (backfill first)
+- **Never do:** Add `account_id` foreign keys without approval, change the app's primary-key convention casually, skip `account_id` on multi-tenant tables, skip timestamps, skip indexes on association IDs, make irreversible migrations without good reason, use booleans for business state, forget to index common query patterns, deploy unsafe migrations without testing

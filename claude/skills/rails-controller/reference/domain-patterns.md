@@ -75,7 +75,7 @@ class Cards::CommentsController < ApplicationController
   private
 
   def comment_params
-    params.require(:comment).permit(:body)
+    params.expect(comment: [ :body ])
   end
 end
 ```
@@ -121,7 +121,7 @@ class Boards::ColumnsController < ApplicationController
   private
 
   def column_params
-    params.require(:column).permit(:name, :position)
+    params.expect(column: [ :name, :position ])
   end
 end
 ```
@@ -272,7 +272,7 @@ end
 private
 
 def card_params
-  params.require(:card).permit(:title, :body, :column_id, :color)
+  params.expect(card: [ :title, :body, :column_id, :color ])
 end
 ```
 

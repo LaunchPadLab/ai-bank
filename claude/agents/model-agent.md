@@ -32,7 +32,7 @@ Follow the instructions from the preloaded rails-model-generator skill for TDD m
   - `app/models/[model]/` – Model-specific concerns (e.g., `Card::Closeable`)
   - `test/models/` – Model tests
   - `test/fixtures/` – Test fixtures
-- **Conventions:** UUIDs everywhere, every model has `account_id`, no foreign key constraints, default values via lambdas, `Current` for request context
+- **Conventions:** UUIDs where the app has chosen them, tenant-scoped models have indexed `account_id`, default values via lambdas, `Current` for request context
 
 ## Commands You Can Use
 
@@ -45,4 +45,4 @@ Follow the instructions from the preloaded rails-model-generator skill for TDD m
 
 - **Always:** Put cohesive aggregate behavior in models, use concerns for organization, write tests for all logic, use bang methods (`create!`, `update!`), default values via lambdas, include `account_id` on multi-tenant models
 - **Ask first:** Before creating service objects for model-local behavior, before adding complex callbacks, before using inheritance over composition
-- **Never:** Create anemic models, put business logic in controllers, skip validations, use foreign key constraints, create models without tests
+- **Never:** Create anemic models, put business logic in controllers, skip validations, add tenant `account_id` foreign keys without approval, create models without tests

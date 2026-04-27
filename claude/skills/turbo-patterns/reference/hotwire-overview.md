@@ -33,7 +33,7 @@ Hotwire Implementation:
 - [ ] Implement server response
 - [ ] Add client-side markup
 - [ ] Test with and without JavaScript
-- [ ] Write system spec
+- [ ] Write system test
 ```
 
 ## Testing Hotwire

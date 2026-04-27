@@ -298,7 +298,7 @@ class UsersController < ApplicationController
   private
 
   def user_params
-    params.require(:user).permit(:name, :email, :avatar)
+    params.expect(user: [ :name, :email, :avatar ])
   end
 end
 ```
@@ -319,7 +319,7 @@ class EventsController < ApplicationController
   private
 
   def event_params
-    params.require(:event).permit(:name, :description, photos: [], documents: [])
+    params.expect(event: [ :name, :description, photos: [], documents: [] ])
   end
 end
 ```

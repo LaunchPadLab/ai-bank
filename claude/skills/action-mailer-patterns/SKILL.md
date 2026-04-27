@@ -54,11 +54,11 @@ test/
 
 ```
 Mailer Progress:
-- [ ] Step 1: Write mailer spec (RED)
-- [ ] Step 2: Run spec (fails)
+- [ ] Step 1: Write mailer test (RED)
+- [ ] Step 2: Run test (fails)
 - [ ] Step 3: Create mailer method
 - [ ] Step 4: Create email templates
-- [ ] Step 5: Run spec (GREEN)
+- [ ] Step 5: Run test (GREEN)
 - [ ] Step 6: Create preview
 - [ ] Step 7: Test delivery integration
 ```

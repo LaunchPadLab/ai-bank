@@ -507,7 +507,7 @@ end
 **Strong parameters:**
 ```ruby
 def model_params
-  params.require(:model_name).permit(:attr1, :attr2, :attr3)
+  params.expect(model_name: [ :attr1, :attr2, :attr3 ])
 end
 ```
 

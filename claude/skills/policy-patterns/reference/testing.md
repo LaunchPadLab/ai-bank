@@ -336,7 +336,7 @@ class EntitiesController < ApplicationController
   end
 
   def entity_params
-    params.require(:entity).permit(policy(@entity || Entity).permitted_attributes)
+    params.expect(entity: policy(@entity || Entity).permitted_attributes)
   end
 end
 ```

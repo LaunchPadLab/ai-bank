@@ -41,10 +41,10 @@ test/policies/
 
 ```
 Authorization Progress:
-- [ ] Step 1: Write policy spec (RED)
-- [ ] Step 2: Run spec (fails)
+- [ ] Step 1: Write policy test (RED)
+- [ ] Step 2: Run test (fails)
 - [ ] Step 3: Implement policy
-- [ ] Step 4: Run spec (GREEN)
+- [ ] Step 4: Run test (GREEN)
 - [ ] Step 5: Add policy to controller
 - [ ] Step 6: Test integration
 ```

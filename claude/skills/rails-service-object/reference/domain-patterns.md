@@ -1,6 +1,8 @@
 # Service Object Domain Patterns
 
-## ApplicationService Base Class
+## Optional ApplicationService Base Class
+
+Start with a plain Ruby object. Add a shared base class only when several services already share the same small interface and the abstraction removes real duplication.
 
 ```ruby
 # app/services/application_service.rb
@@ -29,7 +31,9 @@ end
 
 ## Service Patterns
 
-### 1. Simple CRUD Service
+### 1. Orchestration Service
+
+Do not wrap simple CRUD in a service. Use this pattern when the operation coordinates persistence plus side effects or calculations across more than one aggregate.
 
 ```ruby
 # app/services/submissions/create_service.rb
@@ -363,7 +367,7 @@ class EntitiesController < ApplicationController
   private
 
   def entity_params
-    params.require(:entity).permit(:name, :description, :address, :phone)
+    params.expect(entity: [ :name, :description, :address, :phone ])
   end
 end
 ```
@@ -374,7 +378,7 @@ end
 - Logic involves multiple models
 - Action requires a transaction
 - There are side effects (emails, notifications, external APIs)
-- Logic is too complex for a model
+- Logic does not clearly belong to one aggregate
 - You need to reuse logic (controller, job, console)
 
 ### ❌ Don't use a service when:

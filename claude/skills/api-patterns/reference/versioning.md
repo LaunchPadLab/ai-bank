@@ -141,7 +141,7 @@ module Api
       end
 
       def user_params
-        params.require(:user).permit(:name, :email)
+        params.expect(user: [ :name, :email ])
       end
 
       def pagination_meta(collection)
@@ -328,6 +328,6 @@ API Implementation:
 - [ ] Create version-specific base controller
 - [ ] Create resource controller
 - [ ] Add authentication (if needed)
-- [ ] Write request specs
+- [ ] Write request/integration tests
 - [ ] Document API endpoints
 ```

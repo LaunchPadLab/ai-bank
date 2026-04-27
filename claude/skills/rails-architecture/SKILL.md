@@ -4,40 +4,46 @@ description: Guides modern Rails 8 code architecture decisions and patterns. Use
 allowed-tools: Read, Glob, Grep
 ---
 
-# Modern Rails 8 Architecture Patterns
+# Rails 8 Architecture: Convention First
 
 ## Overview
 
-Rails 8 follows "convention over configuration" with a layered architecture that separates concerns. This skill guides architectural decisions for clean, maintainable code.
+Rails 8 works best when the application uses the framework's conventions before inventing new layers. Favor RESTful controllers, rich Active Record models, Hotwire, Minitest, fixtures, and the app's configured Rails defaults.
+
+The architecture goal is conceptual compression: fewer custom patterns, fewer translation layers, and code that another Rails developer can read without learning a private framework.
 
 ## Architecture Decision Tree
 
 ```
 Where should this code go?
 │
-├─ Is it view/display formatting?
-│   └─ → Presenter (see: rails-presenter skill)
+├─ Is it HTTP request/response handling?
+│   └─ → Controller (standard REST action when possible)
 │
-├─ Is it complex business logic?
-│   └─ → Service Object (see: rails-service-object skill)
+├─ Is it cohesive behavior for one aggregate?
+│   └─ → Model method, association, validation, scope, or state transition
 │
-├─ Is it a complex database query?
-│   └─ → Query Object (see: rails-query-object skill)
-│
-├─ Is it shared behavior across models?
+├─ Is it shared horizontal behavior across models/controllers?
 │   └─ → Concern (see: rails-concern skill)
+│
+├─ Is it read/query complexity?
+│   ├─ Simple/reusable condition → Model scope
+│   └─ Multi-join/reporting query → Query Object (see: rails-query-object skill)
+│
+├─ Is it input complexity across models or wizard steps?
+│   └─ → Form Object (see: form-object-patterns skill)
 │
 ├─ Is it authorization logic?
 │   └─ → Policy (see: policy-patterns skill)
+│
+├─ Is it view/display formatting?
+│   └─ → Presenter, helper, or ViewComponent depending on reuse and logic
 │
 ├─ Is it reusable UI with logic?
 │   └─ → ViewComponent (see: viewcomponent-patterns skill)
 │
 ├─ Is it async/background work?
-│   └─ → Job (see: sidekiq-setup skill)
-│
-├─ Is it a complex form (multi-model, wizard)?
-│   └─ → Form Object (see: form-object-patterns skill)
+│   └─ → Job using the repo's configured queue backend
 │
 ├─ Is it a transactional email?
 │   └─ → Mailer (see: action-mailer-patterns skill)
@@ -45,11 +51,8 @@ Where should this code go?
 ├─ Is it real-time/WebSocket communication?
 │   └─ → Channel (see: action-cable-patterns skill)
 │
-├─ Is it data validation only?
-│   └─ → Model (see: rails-model-generator skill)
-│
-└─ Is it HTTP request/response handling only?
-    └─ → Controller (see: rails-controller skill)
+└─ Does it orchestrate multiple models, transactions, side effects, or external systems?
+    └─ → Service Object (see: rails-service-object skill)
 ```
 
 ## Layer Interaction Flow
@@ -64,14 +67,14 @@ Where should this code go?
 │  • Authenticate (Authentication concern)                     │
 │  • Authorize (Policy)                                        │
 │  • Parse params                                              │
-│  • Delegate to Service/Query                                 │
+│  • Load records, call model behavior, render/redirect         │
 └──────────┬─────────────────────────────────┬────────────────┘
            │                                 │
            ▼                                 ▼
 ┌─────────────────────┐           ┌─────────────────────┐
 │      SERVICE        │           │       QUERY         │
-│  • Business logic   │           │  • Complex queries  │
-│  • Orchestration    │           │  • Aggregations     │
+│  • Orchestration    │           │  • Complex queries  │
+│  • Side effects     │           │  • Aggregations     │
 │  • Transactions     │           │  • Reports          │
 └──────────┬──────────┘           └──────────┬──────────┘
            │                                 │
@@ -99,7 +102,7 @@ ASYNC FLOWS:
 ┌─────────────────────┐       ┌─────────────────────┐
 │        JOB          │       │      CHANNEL        │
 │  • Background work  │       │  • Real-time        │
-│  • Sidekiq          │       │  • WebSockets       │
+│  • Queue backend    │       │  • WebSockets       │
 └─────────────────────┘       └─────────────────────┘
 
 EMAIL FLOWS:
@@ -117,8 +120,8 @@ See [layer-interactions.md](reference/layer-interactions.md) for detailed exampl
 | Layer | Responsibility | Should NOT contain |
 |-------|---------------|-------------------|
 | **Controller** | HTTP, params, response | Business logic, queries |
-| **Model** | Data, validations, relations | Display logic, HTTP |
-| **Service** | Business logic, orchestration | HTTP, display logic |
+| **Model** | Data, validations, relations, aggregate behavior | Display logic, HTTP |
+| **Service** | Cross-model orchestration, side effects, external systems | HTTP, display logic |
 | **Query** | Complex database queries | Business logic |
 | **Presenter** | View formatting, badges | Business logic, queries |
 | **Policy** | Authorization rules | Business logic |
@@ -138,15 +141,14 @@ app/
 │   └── concerns/        # Shared controller behavior
 ├── forms/               # Form objects
 ├── helpers/             # Simple view helpers (avoid)
-├── jobs/                # Background jobs (Sidekiq)
+├── jobs/                # Background jobs
 ├── mailers/             # Action Mailer classes
 ├── models/
 │   └── concerns/        # Shared model behavior
 ├── policies/            # Pundit authorization
 ├── presenters/          # View formatting
 ├── queries/             # Complex queries
-├── services/            # Business logic
-│   └── result.rb        # Shared Result class
+├── services/            # Cross-model orchestration and external systems
 └── views/
     └── layouts/
         └── mailer.html.erb  # Email layout
@@ -154,30 +156,37 @@ app/
 
 ## Core Principles
 
-### 1. Skinny Controllers
+### 1. Conventional Controllers
 
 Controllers should only:
 - Authenticate/authorize
 - Parse params
-- Call service/query
+- Load records and call model behavior
 - Render response
 
 ```ruby
-# GOOD: Thin controller
+# GOOD: standard Rails CRUD
 class OrdersController < ApplicationController
-  def create
-    result = Orders::CreateService.new.call(
-      user: current_user,
-      params: order_params
-    )
+  before_action :set_order, only: %i[ show edit update destroy ]
 
-    if result.success?
-      redirect_to result.data, notice: t(".success")
+  def create
+    @order = current_account.orders.build(order_params)
+
+    if @order.save
+      redirect_to @order, notice: t(".success")
     else
-      flash.now[:alert] = result.error
       render :new, status: :unprocessable_entity
     end
   end
+
+  private
+    def set_order
+      @order = current_account.orders.find(params[:id])
+    end
+
+    def order_params
+      params.expect(order: [ :name, :starts_on ])
+    end
 end
 
 # BAD: Fat controller with business logic
@@ -199,37 +208,41 @@ class OrdersController < ApplicationController
 end
 ```
 
-### 2. Rich Models, Smart Services
+### 2. Rich Models, Small Collaborators
 
 Models handle:
 - Validations
 - Associations
 - Scopes
 - Simple derived attributes
+- Cohesive state transitions and aggregate-local behavior
 
 Services handle:
 - Multi-model operations
 - External API calls
-- Complex business rules
+- Cross-aggregate orchestration
 - Transactions across models
 
-### 3. Result Objects for Services
+### 3. Service Return Values
 
-All services return a consistent Result object:
+Do not introduce an `ApplicationService`, interactor DSL, or shared `Result` object by default. Prefer plain return values, Active Record validations, and Rails exceptions. Add a small result value only when the caller truly needs typed success/failure handling.
 
 ```ruby
-class Result
-  attr_reader :data, :error, :code
+# GOOD: explicit value object when branching is useful
+Result = Data.define(:success, :order, :error) do
+  def success? = success
+  def failure? = !success
+end
 
-  def initialize(success:, data: nil, error: nil, code: nil)
-    @success = success
-    @data = data
-    @error = error
-    @code = code
+class Orders::Checkout
+  def call(order)
+    order.with_lock do
+      return Result.new(false, order, "Order is empty") if order.empty?
+
+      order.checkout!
+      Result.new(true, order, nil)
+    end
   end
-
-  def success? = @success
-  def failure? = !@success
 end
 ```
 
@@ -287,7 +300,7 @@ end
 | Signal | Action |
 |--------|--------|
 | Same code in 3+ places | Extract to concern/service |
-| Controller action > 15 lines | Extract to service |
+| Controller action mixes HTTP with domain logic | Move cohesive behavior to the model; use a service only for orchestration |
 | Model > 300 lines | Extract concerns |
 | Complex conditionals | Extract to policy/service |
 | Query joins 3+ tables | Extract to query object |
@@ -299,8 +312,8 @@ end
 
 - Logic spans multiple models
 - External API calls needed
-- Complex business rules
-- Need consistent error handling
+- Cross-aggregate transaction or side effects
+- Explicit status handling materially improves clarity
 - Logic reused across controllers/jobs
 
 → See **rails-service-object** skill for details.
@@ -371,9 +384,9 @@ Uses `has_secure_password` with Session model, Current class, and password reset
 
 → See **authentication-flow** skill for details.
 
-### Background Jobs (Sidekiq)
+### Background Jobs
 
-Redis-backed job processing via Sidekiq. If the repo uses Solid Queue, preserve that backend unless the user explicitly asks to migrate.
+Use the queue backend already configured by the application. Rails 8 greenfield apps may use the framework default; use Sidekiq guidance only when the repo has chosen Sidekiq or the user explicitly asks for it.
 
 → See **sidekiq-setup** skill for details.
 
@@ -402,9 +415,9 @@ Redis-backed caching via `redis_cache_store` when Redis is part of the stack. Ot
 
 | Anti-Pattern | Problem | Solution |
 |--------------|---------|----------|
-| God Model | Model > 500 lines | Extract services/concerns |
-| Fat Controller | Logic in controllers | Move to services |
-| Callback Hell | Complex model callbacks | Use services |
+| God Model | Unrelated reasons to change | Extract concerns or collaborators by responsibility |
+| Fat Controller | Domain logic in controllers | Move cohesive behavior to models; use services for orchestration |
+| Callback Hell | Complex model callbacks | Use explicit call sites or services |
 | Helper Soup | Massive helper modules | Use presenters/components |
 | N+1 Queries | Unoptimized queries | Use `.includes()`, query objects |
 | Stringly Typed | Magic strings everywhere | Use constants, enums |
@@ -417,7 +430,7 @@ Redis-backed caching via `redis_cache_store` when Redis is part of the stack. Ot
 | Layer | Test Type | Focus |
 |-------|-----------|-------|
 | Model | Unit | Validations, scopes, methods |
-| Service | Unit | Business logic, edge cases |
+| Service | Unit | Orchestration, transactions, external-system boundaries |
 | Query | Unit | Query results, tenant isolation |
 | Presenter | Unit | Formatting, HTML output |
 | Controller | Request | Integration, HTTP flow |

@@ -64,12 +64,17 @@ class EventCreationForm < ApplicationForm
 end
 ```
 
-### 3. Service Object (Business Logic)
+### 3. Service Object (Orchestration)
 
 ```ruby
 # app/services/events/create_service.rb
 module Events
-  class CreateService < ApplicationService
+  Result = Data.define(:success, :event, :error, :code) do
+    def success? = success
+    def failure? = !success
+  end
+
+  class CreateService
     def call(account:, params:)
       event = nil
 
@@ -94,6 +99,14 @@ module Events
     end
 
     private
+
+    def success(event)
+      Result.new(true, event, nil, nil)
+    end
+
+    def failure(error, code)
+      Result.new(false, nil, error, code)
+    end
 
     def attach_vendors(event, vendor_ids)
       return if vendor_ids.blank?
@@ -404,14 +417,14 @@ Request → Controller → Form Object → Service → Models → Response
 
 | Layer | Test Type | What to Test |
 |-------|-----------|--------------|
-| Controller | Request spec | HTTP flow, status codes, redirects |
-| Service | Unit spec | Business logic, Result object |
-| Query | Unit spec | SQL results, tenant isolation |
-| Model | Model spec | Validations, associations, scopes |
-| Policy | Policy spec | Authorization rules |
-| Form | Unit spec | Validations, attribute handling |
-| Presenter | Unit spec | Formatting, HTML output |
-| Component | Component spec | Rendering |
-| Job | Job spec | Execution, side effects |
-| Mailer | Mailer spec | Recipients, content |
-| Channel | Channel spec | Subscriptions, broadcasts |
+| Controller | Request/integration test | HTTP flow, status codes, redirects |
+| Service | Unit test | Orchestration, transactions, side effects |
+| Query | Unit test | SQL results, tenant isolation |
+| Model | Model test | Validations, associations, scopes |
+| Policy | Policy test | Authorization rules |
+| Form | Unit test | Validations, attribute handling |
+| Presenter | Unit test | Formatting, HTML output |
+| Component | Component test | Rendering |
+| Job | Job test | Execution, side effects |
+| Mailer | Mailer test | Recipients, content |
+| Channel | Channel test | Subscriptions, broadcasts |

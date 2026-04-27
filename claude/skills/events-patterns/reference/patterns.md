@@ -226,7 +226,7 @@ class CommentsController < ApplicationController
   end
 
   def comment_params
-    params.require(:comment).permit(:body)
+    params.expect(comment: [ :body ])
   end
 end
 ```
@@ -763,14 +763,14 @@ class TrackingEventsController < ApplicationController
   private
 
   def tracking_event_params
-    params.require(:tracking_event).permit(
+    params.expect(tracking_event: [
       :event_type,
       :trackable_type,
       :trackable_id,
       :url,
       :referrer,
       metadata: {}
-    )
+    ])
   end
 end
 ```

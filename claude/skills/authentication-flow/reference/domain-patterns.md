@@ -498,7 +498,7 @@ class SignupsController < ApplicationController
   private
 
   def signup_params
-    params.require(:signup).permit(:email_address, :full_name, :password)
+    params.expect(signup: [ :email_address, :full_name, :password ])
   end
 end
 ```

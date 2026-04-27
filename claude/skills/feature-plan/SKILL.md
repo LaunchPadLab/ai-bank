@@ -118,8 +118,8 @@ Break down into small PRs (50-200 lines each):
 - Models: Unit tests (validations, scopes, associations)
 - Services: Unit tests (success/failure, edge cases)
 - Policies: Policy tests (all personas and actions)
-- Controllers: Request specs (all actions and status codes)
-- Components: Component specs (rendering, variants)
+- Controllers: Request/integration tests (all actions and status codes)
+- Components: Component tests (rendering, variants)
 
 ## Security Considerations
 - [ ] Authorization with Pundit
