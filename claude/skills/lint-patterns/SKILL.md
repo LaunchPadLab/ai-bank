@@ -373,3 +373,9 @@ bundle exec rubocop -a
 bundle exec rubocop -a app/models/
 bundle exec rubocop -a app/controllers/
 ```
+
+## Agent Verification
+
+- Prefer safe autocorrect with `bundle exec rubocop -a path/to/file`.
+- Re-run `bundle exec rubocop path/to/file` after autocorrect to verify no offenses remain.
+- Do not run unsafe autocorrect (`rubocop -A`) or change lint configuration without explicit user approval.

@@ -28,7 +28,7 @@ Where should this code go?
 │   └─ → Concern (see: rails-concern skill)
 │
 ├─ Is it authorization logic?
-│   └─ → Policy (see: authorization-pundit skill)
+│   └─ → Policy (see: policy-patterns skill)
 │
 ├─ Is it reusable UI with logic?
 │   └─ → ViewComponent (see: viewcomponent-patterns skill)
@@ -357,7 +357,7 @@ end
 - Action permissions
 - Scoped collections
 
-→ See **authorization-pundit** skill for details.
+→ See **policy-patterns** skill for details.
 
 ## Rails 8 Specific Features
 
@@ -373,7 +373,7 @@ Uses `has_secure_password` with Session model, Current class, and password reset
 
 ### Background Jobs (Sidekiq)
 
-Redis-backed job processing via Sidekiq.
+Redis-backed job processing via Sidekiq. If the repo uses Solid Queue, preserve that backend unless the user explicitly asks to migrate.
 
 → See **sidekiq-setup** skill for details.
 
@@ -385,7 +385,7 @@ WebSocket support with Redis adapter.
 
 ### Caching (Redis)
 
-Redis-backed caching via `redis_cache_store`.
+Redis-backed caching via `redis_cache_store` when Redis is part of the stack. Otherwise follow the repo's configured cache store.
 
 → See **caching-strategies** skill for details.
 
@@ -462,10 +462,10 @@ Redis-backed caching via `redis_cache_store`.
 | **Data Layer** | rails-model-generator, rails-query-object, database-migrations |
 | **Business Logic** | rails-service-object, rails-concern, form-object-patterns |
 | **Presentation** | rails-presenter, viewcomponent-patterns |
-| **Controllers** | rails-controller, api-versioning |
-| **Auth** | authentication-flow, authorization-pundit |
+| **Controllers** | rails-controller, api-patterns |
+| **Auth** | authentication-flow, policy-patterns |
 | **Background** | sidekiq-setup, action-mailer-patterns |
-| **Real-time** | action-cable-patterns, hotwire-patterns |
+| **Real-time** | action-cable-patterns, turbo-patterns |
 | **Performance** | caching-strategies, performance-optimization |
 | **I18n** | i18n-patterns |
 | **Testing** | tdd-cycle |

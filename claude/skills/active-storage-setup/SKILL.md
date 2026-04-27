@@ -358,7 +358,8 @@ end
     <% if @user.avatar.attached? %>
       <div class="mt-2">
         <%= image_tag @user.avatar.variant(:thumb), class: "rounded" %>
-        <%= link_to "Remove", remove_avatar_user_path(@user), method: :delete %>
+        <%= link_to "Remove", remove_avatar_user_path(@user),
+                    data: { turbo_method: :delete } %>
       </div>
     <% end %>
   </div>
@@ -525,3 +526,9 @@ end
 - [ ] Form handles file upload
 - [ ] Tests written for attachments
 - [ ] Direct uploads configured (if needed)
+
+## Agent Verification
+
+- Run focused model/controller tests for attachment validation, upload, and purge behavior.
+- Smoke upload and removal in the browser when forms, direct uploads, previews, or Turbo responses change.
+- Verify variants process successfully for image attachments.

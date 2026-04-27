@@ -1,6 +1,6 @@
 ---
 name: action-cable-patterns
-description: Implements real-time features with Action Cable and WebSockets. Use when adding live updates, chat features, notifications, real-time dashboards, or when user mentions Action Cable, WebSockets, channels, or real-time.
+description: Implements Action Cable WebSocket channels, connection authentication, subscriptions, and server-to-client broadcasts. Use when adding chat, notifications, live dashboards, collaborative updates, or when the user mentions Action Cable, WebSockets, channels, subscriptions, or cable connections.
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
@@ -635,12 +635,14 @@ def self.broadcast_if_subscribed(user, data)
 end
 ```
 
-### Debouncing Broadcasts
+### Rate-Limiting Broadcasts
+
+This pattern runs the first broadcast for a key and suppresses duplicates during the window. It is rate limiting, not true debounce/coalescing. If the desired behavior is "run once after changes settle," enqueue a delayed job and coalesce by key in the job store.
 
 ```ruby
 # app/services/broadcast_service.rb
 class BroadcastService
-  def self.debounced_broadcast(key, data, wait: 1.second)
+  def self.rate_limited_broadcast(key, wait: 1.second)
     Rails.cache.fetch("broadcast:#{key}", expires_in: wait) do
       yield
       true

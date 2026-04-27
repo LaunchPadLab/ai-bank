@@ -1,7 +1,6 @@
 ---
 name: avo-resources
 description: Creates and configures Avo 3.x resources for Ruby on Rails admin panels. Use proactively when creating new Avo resources, adding fields to resources, configuring resource options, setting up associations in Avo, working with any file in app/avo/resources/, generating Avo resources from models, or when the user mentions Avo resources, Avo fields, Avo admin, or CRUD in the context of Avo.
-user-invocable: false
 argument-hint: "[model-name]"
 ---
 
@@ -27,9 +26,9 @@ docs when you need authoritative Avo semantics or option details. If this skill
 conflicts with the Avo docs, follow the Avo docs.
 
 ## Existing Avo Resources
-- Resources: !`ls app/avo/resources/ 2>/dev/null || echo "No Avo resources yet"`
-- Actions: !`ls app/avo/actions/ 2>/dev/null || echo "No Avo actions yet"`
-- Filters: !`ls app/avo/filters/ 2>/dev/null || echo "No Avo filters yet"`
+- List `app/avo/resources/` to inspect existing resources, if the directory exists.
+- List `app/avo/actions/` to inspect existing actions, if the directory exists.
+- List `app/avo/filters/` to inspect existing filters, if the directory exists.
 
 ## Resource Structure
 

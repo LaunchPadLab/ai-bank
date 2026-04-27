@@ -6,6 +6,8 @@ user-invocable: false
 
 # RED Phase Test Patterns by Component Type
 
+Use this for the RED step of TDD when the goal is to write the first failing test. Use `testing-patterns` for broader Rails test mechanics and `tdd-cycle` for the complete Red-Green-Refactor workflow.
+
 ## New Model
 
 ```ruby
@@ -35,13 +37,13 @@ class MembershipTest < ActiveSupport::TestCase
   test "requires starts_at" do
     membership = Membership.new(starts_at: nil)
     assert_not membership.valid?
-    assert_includes membership.errors[:starts_at], "can't be blank"
+    assert membership.errors.added?(:starts_at, :blank)
   end
 
   test "requires status" do
     membership = Membership.new(status: nil)
     assert_not membership.valid?
-    assert_includes membership.errors[:status], "can't be blank"
+    assert membership.errors.added?(:status, :blank)
   end
 
   # --- Instance methods ---

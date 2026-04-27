@@ -44,7 +44,7 @@ end
 class TrackingEvent < ApplicationRecord
   belongs_to :trackable, polymorphic: true
   belongs_to :account
-  enum :type, { page_view: 0, link_click: 1, form_submit: 2 }
+  enum :event_kind, { page_view: 0, link_click: 1, form_submit: 2 }
 end
 
 # ✅ Activity as polymorphic records
@@ -138,3 +138,9 @@ Test event creation and activity feed generation, webhook delivery success/failu
 ## Additional Resources
 
 - [Detailed Patterns & Code Examples](reference/patterns.md) — Full implementation code for all 6 patterns including models, migrations, controllers, views, Stimulus controllers, and complete test suites
+
+## Agent Verification
+
+- Run focused model/job tests for event creation, activity records, webhook delivery, and retry behavior.
+- Run a system or integration test for user-visible activity feeds or real-time updates.
+- Verify account scoping on event queries and webhook endpoints.

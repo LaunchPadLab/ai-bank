@@ -36,7 +36,7 @@ end
 | @turbo-agent | React/Vue → Turbo Frames; AJAX → Turbo Streams; SPA → server-rendered |
 | @stimulus-agent | jQuery spaghetti → Stimulus; large JS files → focused controllers |
 | @test-agent | RSpec → Minitest; FactoryBot → fixtures |
-| @migration-agent | Integer IDs → UUIDs; foreign keys → soft references |
+| @migration-agent | Integer IDs → UUIDs; tenant foreign keys → indexed soft account references |
 | @jobs-agent | Inline processing → Sidekiq background jobs |
 | @events-agent | Callback hell → domain events; observer pattern → event records |
 | @caching-agent | Slow caching → optimized Redis caching; manual invalidation → `touch: true` |
@@ -216,7 +216,7 @@ end
 
 **Steps:**
 1. @multi-tenant-agent: Create Account and Membership models
-2. @migration-agent: Add account_id to all tables
+2. @migration-agent: Add indexed `account_id` UUID columns to all tenant-scoped tables without database foreign keys unless explicitly approved
 3. @migration-agent: Backfill account_id from existing data
 4. @model-agent: Add account associations to all models
 5. @crud-agent: Update controllers for account scoping
@@ -660,3 +660,7 @@ For database changes:
 - Rollback plan for each phase
 - Database backups before migrations
 - Test coverage maintained at 90%+
+
+## Additional Resources
+
+- [classic-refactorings.md](reference/classic-refactorings.md) -- Extract Method, Replace Conditional with Polymorphism, Introduce Parameter Object, Named Constants, Decompose Conditional, DRY, Guard Clauses, and Extract Service examples

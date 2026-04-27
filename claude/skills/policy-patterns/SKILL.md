@@ -1,7 +1,6 @@
 ---
 name: policy-patterns
 description: Implements Pundit authorization policies with TDD for role-based access control. Use when creating new policies, adding permission rules, restricting controller actions by role (visitor, user, owner, admin), implementing policy scopes, adding custom policy actions (moderate, approve, cancel, flag), handling temporal conditions (booking windows, cancellation deadlines), or when user mentions Pundit, policies, authorization, permissions, access control, or authorization matrix.
-user-invocable: false
 ---
 
 # Pundit Policy Patterns Reference
@@ -416,3 +415,9 @@ end
 - [domain-patterns.md](reference/domain-patterns.md) — Controller authorization integration, policy testing patterns, naming conventions, commands, security checklist
 - [authorization-setup.md](reference/authorization-setup.md) — Pundit installation, base policy, policy structure, scopes, controller/view integration, headless policies, permitted attributes, nested resources, error messages
 - [testing.md](reference/testing.md) — Pundit test helpers, policy testing by role (visitor/user/owner/admin), scope tests, permitted attribute tests, controller authorization tests, custom action tests, view policy checks
+
+## Agent Verification
+
+- Run focused policy tests, for example `bin/rails test test/policies/resource_policy_test.rb`.
+- Add or run controller/integration tests for protected actions and unauthorized access.
+- Verify policy scopes do not leak cross-account or unauthorized records.

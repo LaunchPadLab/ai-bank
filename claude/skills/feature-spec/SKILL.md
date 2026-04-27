@@ -74,9 +74,11 @@ Generate a complete spec following `references/FEATURE_TEMPLATE.md` structure.
 
 ### Phase 4: Handoff
 
+Before naming the output path, inspect the repo for an existing feature/spec docs location. Prefer the established location; use `docs/features/[feature-name].md` only when no local convention exists.
+
 ```
 Next steps:
-1. Spec generated: docs/features/[feature-name].md
+1. Spec generated: [repo feature docs location]/[feature-name].md
 2. Run /feature-review to review this spec
    Target: Score >= 7/10 and "Ready for Development"
 ```

@@ -27,13 +27,13 @@ class EventTest < ActiveSupport::TestCase
   test "validates presence of name" do
     event = Event.new(event_date: 1.week.from_now, account: accounts(:one))
     assert_not event.valid?
-    assert_includes event.errors[:name], "can't be blank"
+    assert event.errors.added?(:name, :blank)
   end
 
   test "validates presence of event_date" do
     event = Event.new(name: "Test", account: accounts(:one))
     assert_not event.valid?
-    assert_includes event.errors[:event_date], "can't be blank"
+    assert event.errors.added?(:event_date, :blank)
   end
 
   test "belongs to account" do

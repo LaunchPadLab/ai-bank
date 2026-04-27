@@ -104,9 +104,9 @@ class RegistrationFormTest < ActiveSupport::TestCase
   test "validates presence of required fields" do
     form = RegistrationForm.new
     assert_not form.valid?
-    assert_includes form.errors[:email], "can't be blank"
-    assert_includes form.errors[:password], "can't be blank"
-    assert_includes form.errors[:company_name], "can't be blank"
+    assert form.errors.added?(:email, :blank)
+    assert form.errors.added?(:password, :blank)
+    assert form.errors.added?(:company_name, :blank)
   end
 
   test "validates password minimum length" do

@@ -104,7 +104,7 @@ class ModelNameTest < ActiveSupport::TestCase
   test "requires name" do
     record = ModelName.new(name: nil)
     assert_not record.valid?
-    assert_includes record.errors[:name], "can't be blank"
+    assert record.errors.added?(:name, :blank)
   end
 
   test "requires unique email (case insensitive)" do
@@ -187,6 +187,8 @@ Review the generated migration and add:
 - Defaults: `default: 0`
 - Indexes: `add_index :table, :column`
 
+For tenant ownership columns, follow the multi-tenant convention: use an indexed UUID `account_id` without a database foreign key unless the project explicitly opts into hard tenant FKs.
+
 ```ruby
 # db/migrate/YYYYMMDDHHMMSS_create_model_names.rb
 class CreateModelNames < ActiveRecord::Migration[8.0]
@@ -196,6 +198,8 @@ class CreateModelNames < ActiveRecord::Migration[8.0]
       t.string :email, null: false
       t.integer :status, null: false, default: 0
       t.references :organization, null: false, foreign_key: true
+      # Tenant ownership example:
+      # t.references :account, null: false, type: :uuid, foreign_key: false, index: true
 
       t.timestamps
     end

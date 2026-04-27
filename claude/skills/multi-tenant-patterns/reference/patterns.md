@@ -940,7 +940,7 @@ class BoardTest < ActiveSupport::TestCase
     board = Board.new(name: "Test", creator: users(:alice))
 
     assert_not board.valid?
-    assert_includes board.errors[:account_id], "can't be blank"
+    assert board.errors.added?(:account_id, :blank)
   end
 
   test "scopes cards to same account" do

@@ -1,6 +1,6 @@
 ---
 name: caching-strategies
-description: Implements Rails caching patterns for performance optimization. Use when adding fragment caching, Russian doll caching, low-level caching, cache invalidation, or when user mentions caching, performance, cache keys, or memoization.
+description: Implements Rails caching patterns including fragment caching, Russian doll caching, low-level cache reads/writes, cache keys, and invalidation. Use when the user mentions caching, cache keys, memoization, stale cache data, or Redis cache behavior; use performance-optimization for N+1 queries, query plans, memory, or profiling.
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 

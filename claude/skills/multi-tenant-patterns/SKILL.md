@@ -70,13 +70,15 @@ end
 - UUIDs prevent enumeration
 - Single database, single schema
 
+**Foreign key convention:** Tenant ownership is enforced in application code with explicit `Current.account` scoping, account-consistency validations, and indexes. Do not add database foreign key constraints on `account_id` unless the project owner explicitly chooses hard tenant FKs for a specific table. Non-tenant associations can still use foreign keys when they do not conflict with the account-scoping strategy.
+
 ## Commands
 
 ```bash
 rails generate model Account name:string
 rails generate model Membership user:references account:references role:integer
-rails generate migration AddAccountToCards account:references
-rails generate scaffold Board name:string account:references
+rails generate migration AddAccountToCards account:uuid:index
+rails generate scaffold Board name:string account:uuid
 ```
 
 ## Pattern Index
@@ -195,7 +197,7 @@ end
 - Use subdomain-based multi-tenancy (acme.app.com)
 - Use schema-based multi-tenancy (Apartment gem)
 - Use default_scope for account filtering
-- Add foreign key constraints on account_id
+- Add foreign key constraints on account_id without an explicit project-level exception
 - Set Current.account from current_user.account (should be from URL)
 - Allow access to resources without checking account
 - Forget to scope queries through Current.account

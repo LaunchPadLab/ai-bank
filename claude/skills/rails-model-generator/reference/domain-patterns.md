@@ -550,7 +550,7 @@ class CardTest < ActiveSupport::TestCase
     card = Card.new(board: @card.board, column: @card.column)
 
     assert_not card.valid?
-    assert_includes card.errors[:title], "can't be blank"
+    assert card.errors.added?(:title, :blank)
   end
 end
 ```

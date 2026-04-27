@@ -1,7 +1,7 @@
 ---
 name: rails-presenter
 description: Creates presenter objects for view formatting using SimpleDelegator pattern with TDD. Use when extracting view logic from models, formatting data for display, creating badges/labels, or when user mentions presenters, view models, formatting, or display helpers.
-allowed-tools: Read, Write, Edit, Bash(bin/rails test:*), Glob, Grep
+allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
 # Rails Presenter Generator (TDD)

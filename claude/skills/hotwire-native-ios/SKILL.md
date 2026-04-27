@@ -111,6 +111,8 @@ end
 
 Load these files as needed:
 - `BRIDGE_COMPONENTS.md` - Bridge component implementation
+- `AUTH.md` - Authentication integration patterns
+- `NAVIGATION.md` - Navigation and path configuration patterns
 - `reference.md` - Full API reference  
 - `examples.md` - Complete code examples
 

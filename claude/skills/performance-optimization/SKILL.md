@@ -1,6 +1,6 @@
 ---
 name: performance-optimization
-description: Identifies and fixes Rails performance issues including N+1 queries, slow queries, and memory problems. Use when optimizing queries, fixing N+1 issues, improving response times, or when user mentions performance, slow, optimization, or Bullet gem.
+description: Identifies and fixes Rails runtime performance issues including N+1 queries, slow SQL, missing indexes, memory growth, profiling findings, and Bullet warnings. Use when optimizing response times, query plans, eager loading, memory, or slow endpoints; use caching-strategies when the main change is cache keys or fragment/low-level caching.
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 

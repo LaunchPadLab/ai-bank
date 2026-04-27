@@ -17,6 +17,8 @@ This skill guides you through the Test-Driven Development cycle:
 2. **GREEN**: Write minimal code to pass the test
 3. **REFACTOR**: Improve code while keeping tests green
 
+Use `red-test-patterns` for component-specific RED templates, `testing-patterns` for Rails test mechanics and assertions, and `refactoring-patterns` for behavior-preserving cleanup after GREEN.
+
 ## Workflow Checklist
 
 Copy and track progress:
@@ -164,7 +166,7 @@ class UserValidationTest < ActiveSupport::TestCase
   test "requires email" do
     user = User.new(email: nil)
     assert_not user.valid?
-    assert_includes user.errors[:email], "can't be blank"
+    assert user.errors.added?(:email, :blank)
   end
 
   test "requires unique email (case insensitive)" do

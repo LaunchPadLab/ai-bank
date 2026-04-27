@@ -95,12 +95,18 @@ end
 ### Pattern 4: Add Foreign Key with Index
 
 ```ruby
-# db/migrate/20240115000001_add_account_to_events.rb
-class AddAccountToEvents < ActiveRecord::Migration[8.0]
+# db/migrate/20240115000001_add_organizer_to_events.rb
+class AddOrganizerToEvents < ActiveRecord::Migration[8.0]
   def change
-    add_reference :events, :account, null: false, foreign_key: true, index: true
+    add_reference :events, :organizer, null: false, foreign_key: { to_table: :users }, index: true
   end
 end
+```
+
+For tenant ownership columns, follow the project's multi-tenant convention: keep `account_id` indexed, but do not add a database foreign key unless the project explicitly opts into hard tenant FKs for that table.
+
+```ruby
+add_reference :events, :account, null: false, type: :uuid, foreign_key: false, index: true
 ```
 
 ### Pattern 5: Rename Column (Safe)
@@ -361,7 +367,7 @@ class CreateEvents < ActiveRecord::Migration[8.0]
     create_table :events do |t|
       t.string :name, null: false
       t.date :event_date
-      t.references :account, null: false, foreign_key: true
+      t.references :account, null: false, type: :uuid, foreign_key: false
       t.timestamps
     end
 

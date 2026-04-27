@@ -14,7 +14,7 @@ validates :email, presence: { message: "is required" }
 test "requires name" do
   record = ModelName.new(name: nil)
   assert_not record.valid?
-  assert_includes record.errors[:name], "can't be blank"
+  assert record.errors.added?(:name, :blank)
 end
 ```
 
@@ -172,7 +172,7 @@ test "requires phone when requires_phone? is true" do
   record = ModelName.new(phone: nil)
   record.stub(:requires_phone?, true) do
     assert_not record.valid?
-    assert_includes record.errors[:phone], "can't be blank"
+    assert record.errors.added?(:phone, :blank)
   end
 end
 ```
@@ -189,7 +189,7 @@ validates :reason, presence: true, on: :archive
 test "requires password on create" do
   record = ModelName.new(password: nil)
   assert_not record.valid?(:create)
-  assert_includes record.errors[:password], "can't be blank"
+  assert record.errors.added?(:password, :blank)
 end
 ```
 

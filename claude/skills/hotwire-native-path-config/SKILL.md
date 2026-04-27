@@ -1,6 +1,7 @@
 ---
 name: hotwire-native-path-config
 description: Configure and debug Hotwire Native path configurations for iOS and Android apps. Use when reviewing path-configuration.json files, adding routing rules for new screens, debugging modal/navigation issues, optimizing pull-to-refresh behavior, or when user mentions path configuration, path rules, or navigation routing in Hotwire Native context.
+allowed-tools: Read, Write, Edit, Glob, Grep
 ---
 
 # Hotwire Native Path Configuration
@@ -8,6 +9,8 @@ description: Configure and debug Hotwire Native path configurations for iOS and 
 Configure URL routing rules that control navigation behavior in Hotwire Native iOS/Android apps.
 
 ## Configuration Files in This Project
+
+The paths below are examples from one app layout. Replace them with the current repo's actual remote and bundled path configuration files before editing.
 
 | File | Purpose |
 |------|---------|

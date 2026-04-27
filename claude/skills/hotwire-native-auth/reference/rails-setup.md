@@ -4,6 +4,8 @@
 
 The key change from standard Rails authentication is using `cookies.signed.permanent` instead of session-only cookies. This ensures the cookie persists after the native app is closed.
 
+This setup uses the same token-based cookie convention as the Rails authentication and Action Cable skills: `cookies.signed.permanent[:session_token]` stores `session.token`, and `resume_session` looks up the session by that token.
+
 ```ruby
 # app/controllers/concerns/authentication.rb
 module Authentication
@@ -37,8 +39,8 @@ module Authentication
   end
 
   def find_session_by_cookie
-    if id = cookies.signed[:session_id]
-      Session.find_by(id: id)
+    if token = cookies.signed[:session_token]
+      Session.find_by(token: token)
     end
   end
 
@@ -57,14 +59,14 @@ module Authentication
       user_agent: request.user_agent
     )
     Current.session = session
-    cookies.signed.permanent[:session_id] = {
-      value: session.id, httponly: true, same_site: :lax
+    cookies.signed.permanent[:session_token] = {
+      value: session.token, httponly: true, same_site: :lax
     }
   end
 
   def terminate_session
     Current.session&.destroy
-    cookies.delete(:session_id)
+    cookies.delete(:session_token)
   end
 end
 ```

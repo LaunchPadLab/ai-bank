@@ -6,8 +6,53 @@ Quick validation script for skills - minimal version
 import sys
 import os
 import re
-import yaml
 from pathlib import Path
+
+try:
+    import yaml
+except ImportError:
+    yaml = None
+
+
+def parse_frontmatter(frontmatter_text):
+    """Parse YAML frontmatter, with a small fallback for simple skill metadata."""
+    if yaml:
+        return yaml.safe_load(frontmatter_text)
+
+    parsed = {}
+    lines = frontmatter_text.splitlines()
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        if not line.strip():
+            index += 1
+            continue
+        if line.startswith(" ") or ":" not in line:
+            index += 1
+            continue
+
+        key, value = line.split(":", 1)
+        key = key.strip()
+        value = value.strip()
+
+        if value in {">", ">-", "|", "|-"}:
+            index += 1
+            block_lines = []
+            while index < len(lines) and (lines[index].startswith(" ") or not lines[index].strip()):
+                block_lines.append(lines[index].strip())
+                index += 1
+            parsed[key] = " ".join(part for part in block_lines if part)
+            continue
+
+        if value.lower() == "true":
+            parsed[key] = True
+        elif value.lower() == "false":
+            parsed[key] = False
+        else:
+            parsed[key] = value.strip('"\'')
+        index += 1
+
+    return parsed
 
 def validate_skill(skill_path):
     """Basic validation of a skill"""
@@ -32,14 +77,25 @@ def validate_skill(skill_path):
 
     # Parse YAML frontmatter
     try:
-        frontmatter = yaml.safe_load(frontmatter_text)
+        frontmatter = parse_frontmatter(frontmatter_text)
         if not isinstance(frontmatter, dict):
             return False, "Frontmatter must be a YAML dictionary"
-    except yaml.YAMLError as e:
+    except Exception as e:
         return False, f"Invalid YAML in frontmatter: {e}"
 
-    # Define allowed properties
-    ALLOWED_PROPERTIES = {'name', 'description', 'license', 'allowed-tools', 'metadata'}
+    # Define allowed properties for this repository's skill profiles.
+    ALLOWED_PROPERTIES = {
+        'name',
+        'description',
+        'license',
+        'allowed-tools',
+        'metadata',
+        'user-invocable',
+        'argument-hint',
+        'disable-model-invocation',
+        'context',
+        'agent',
+    }
 
     # Check for unexpected properties (excluding nested keys under metadata)
     unexpected_keys = set(frontmatter.keys()) - ALLOWED_PROPERTIES

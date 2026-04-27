@@ -173,3 +173,9 @@ end
 
 - [Detailed pattern code examples](reference/patterns.md) — Full implementations for all 10 patterns plus testing examples
 - For API versioning patterns, see [reference/versioning.md](reference/versioning.md)
+
+## Agent Verification
+
+- Run focused request/integration tests for changed endpoints, for example `bin/rails test test/controllers/api/`.
+- Verify JSON status codes, error envelopes, pagination metadata, and authorization behavior.
+- For Jbuilder changes, inspect one rendered response shape or add an assertion for required keys.

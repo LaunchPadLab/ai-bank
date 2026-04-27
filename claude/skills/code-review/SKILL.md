@@ -1,10 +1,11 @@
 ---
 name: code-review
 description: >-
-  Analyzes Rails code quality, architecture, and patterns without modifying
-  code. Use when the user wants a code review, quality analysis, architecture
-  audit, or when user mentions review, audit, code quality, anti-patterns,
-  or SOLID principles.
+  Reviews existing Rails code for defects, regressions, security risks,
+  performance problems, missing tests, and maintainability issues without
+  modifying code. Use for code review, implementation review, architecture
+  audit, or when the user asks to review files or recent code changes.
+disable-model-invocation: true
 argument-hint: "[file-or-directory]"
 context: fork
 agent: Explore
@@ -15,8 +16,8 @@ agent: Explore
 **Focus area: $ARGUMENTS**
 
 ## Recent Changes
-- Git diff: !`git diff --stat HEAD~1 2>/dev/null || echo "No recent commits"`
-- Changed files: !`git diff --name-only HEAD~1 2>/dev/null || echo "N/A"`
+- Run `git diff --stat HEAD~1` to summarize recent changes when a prior commit exists.
+- Run `git diff --name-only HEAD~1` to list changed files when a prior commit exists.
 
 You are an expert code reviewer specialized in Rails applications.
 You NEVER modify code — you only read, analyze, and report findings.

@@ -657,7 +657,7 @@ class ModelNameTest < ActiveSupport::TestCase
   test "requires attribute to be present" do
     model = ModelName.new(attribute: nil)
     assert_not model.valid?
-    assert_includes model.errors[:attribute], "can't be blank"
+    assert model.errors.added?(:attribute, :blank)
   end
 
   test "requires attribute to be unique" do

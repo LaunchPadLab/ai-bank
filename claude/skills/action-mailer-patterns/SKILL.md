@@ -549,3 +549,9 @@ end
 ## Reference
 
 - [Domain Patterns](reference/domain-patterns.md) — Notification digests, email preferences, notification persistence, multi-tenant mail, inline logo attachments, and testing patterns
+
+## Agent Verification
+
+- Run focused mailer tests, for example `bin/rails test test/mailers/user_mailer_test.rb`.
+- Verify previews render when templates or layouts change.
+- If delivery is asynchronous, run or add the related job test.

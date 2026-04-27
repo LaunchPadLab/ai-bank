@@ -5,7 +5,8 @@ description: >-
   Scores specs, identifies gaps, generates missing Gherkin scenarios, and
   provides actionable improvement suggestions. Use when the user wants to
   review a feature spec, validate requirements, or mentions spec review,
-  specification quality, or requirements validation.
+  specification quality, requirements validation, acceptance criteria, or
+  Gherkin coverage. Use code-review for implemented code changes.
 disable-model-invocation: true
 argument-hint: "[spec-path]"
 context: fork

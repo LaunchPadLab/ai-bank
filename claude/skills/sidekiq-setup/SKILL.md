@@ -18,6 +18,10 @@ Sidekiq is a high-performance background job processor for Ruby:
 - Web UI dashboard for monitoring
 - Supports scheduled jobs, batches, and rate limiting
 
+## Assumptions
+
+Use this skill only when the project has chosen Sidekiq or the user explicitly asks for Sidekiq. Rails 8 greenfield apps may use Solid Queue by default; if the repo already uses Solid Queue and the user did not request Sidekiq, keep the existing queue backend.
+
 ## Quick Start
 
 ### Installation
@@ -172,26 +176,61 @@ Sidekiq::Cron::Job.create(
 
 ## Testing Jobs
 
+### Native Sidekiq Jobs
+
+Use Sidekiq's test helpers for classes that include `Sidekiq::Job` and enqueue with `perform_async`.
+
 ```ruby
 # test/jobs/send_welcome_email_job_test.rb
 require "test_helper"
+require "sidekiq/testing"
 
 class SendWelcomeEmailJobTest < ActiveSupport::TestCase
-  include ActiveJob::TestHelper
-
-  test "sends welcome email" do
-    user = users(:one)
-
-    assert_enqueued_email_with UserMailer, :welcome, args: [user] do
-      SendWelcomeEmailJob.perform_async(user.id)
-    end
+  setup do
+    Sidekiq::Testing.fake!
+    SendWelcomeEmailJob.clear
   end
 
   test "enqueues the job" do
     user = users(:one)
 
-    assert_difference -> { Sidekiq::Queues["default"].size } do
+    assert_difference -> { SendWelcomeEmailJob.jobs.size }, 1 do
       SendWelcomeEmailJob.perform_async(user.id)
+    end
+  end
+
+  test "sends welcome email when performed" do
+    user = users(:one)
+
+    assert_emails 1 do
+      SendWelcomeEmailJob.perform_async(user.id)
+      SendWelcomeEmailJob.drain
+    end
+  end
+end
+```
+
+### Active Job Wrapper
+
+Use Active Job assertions only for jobs that inherit from `ApplicationJob` and enqueue with `perform_later`.
+
+```ruby
+class WelcomeEmailJob < ApplicationJob
+  queue_as :default
+
+  def perform(user)
+    UserMailer.welcome(user).deliver_later
+  end
+end
+
+class WelcomeEmailJobTest < ActiveJob::TestCase
+  include ActiveJob::TestHelper
+
+  test "enqueues welcome email" do
+    user = users(:one)
+
+    assert_enqueued_email_with UserMailer, :welcome, args: [user] do
+      WelcomeEmailJob.perform_later(user)
     end
   end
 end

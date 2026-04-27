@@ -1,7 +1,6 @@
 ---
 name: skill-creator
 description: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Claude's capabilities with specialized knowledge, workflows, or tool integrations.
-license: Complete terms in LICENSE.txt
 ---
 
 # Skill Creator
@@ -305,15 +304,19 @@ Any example files and directories not needed for the skill should be deleted. Th
 
 ##### Frontmatter
 
-Write the YAML frontmatter with `name` and `description`:
+Write the YAML frontmatter with `name` and `description`, then add runner-specific fields only when they match the skill profile:
 
 - `name`: The skill name
 - `description`: This is the primary triggering mechanism for your skill, and helps Claude understand when to use the skill.
   - Include both what the Skill does and specific triggers/contexts for when to use it.
   - Include all "when to use" information here - Not in the body. The body is only loaded after triggering, so "When to Use This Skill" sections in the body are not helpful to Claude.
   - Example description for a `docx` skill: "Comprehensive document creation, editing, and analysis with support for tracked changes, comments, formatting preservation, and text extraction. Use when Claude needs to work with professional documents (.docx files) for: (1) Creating new documents, (2) Modifying or editing content, (3) Working with tracked changes, (4) Adding comments, or any other document tasks"
+- `allowed-tools`: Use for generator/action skills that need a constrained set of tools.
+- `user-invocable: false`: Use for reference-only skills that should attach as support material.
+- `disable-model-invocation: true`, `context`, `agent`, and `argument-hint`: Use for forked review, planning, and analysis skills when the runner supports those fields.
+- `metadata`: Use for structured extension data that should not become top-level schema.
 
-Do not include any other fields in YAML frontmatter.
+Keep `skill-creator/scripts/quick_validate.py` synchronized with this schema. See `claude/skills/README.md` for the local frontmatter profiles.
 
 ##### Body
 
@@ -345,6 +348,8 @@ The packaging script will:
 2. **Package** the skill if validation passes, creating a .skill file named after the skill (e.g., `my-skill.skill`) that includes all files and maintains the proper directory structure for distribution. The .skill file is a zip file with a .skill extension.
 
 If validation fails, the script will report the errors and exit without creating a package. Fix any validation errors and run the packaging command again.
+
+Local script dependencies: install `PyYAML` before running validation or packaging (`python -m pip install pyyaml`) if it is not already available.
 
 ### Step 6: Iterate
 

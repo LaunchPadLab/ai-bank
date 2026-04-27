@@ -1,6 +1,6 @@
 ---
 name: turbo-patterns
-description: Turbo Streams, Turbo Frames, morphing, broadcasting, and real-time UI patterns for Rails 8. Reference material for Hotwire/Turbo development.
+description: Reference material for Turbo Frames, Turbo Streams, morphing, server-rendered partial replacement, and Hotwire UI updates in Rails 8. Use for Turbo-driven navigation and DOM updates; use action-cable-patterns for low-level WebSocket channels.
 user-invocable: false
 ---
 
@@ -776,3 +776,9 @@ turbo_stream.morph dom_id(@board), partial: "boards/show"
 - [Hotwire overview, decision table, workflow checklist, testing & debugging](reference/hotwire-overview.md)
 - [Turbo Frames reference — attributes, lazy loading, modals, tabs, events](reference/turbo-frames.md)
 - [Turbo Streams reference — actions, helpers, ActionCable broadcasts, testing](reference/turbo-streams.md)
+
+## Agent Verification
+
+- Run focused integration/system tests for frame navigation, stream responses, and morph behavior.
+- Inspect one Turbo response for the expected target/action when changing stream templates.
+- Smoke the browser flow when the change affects modals, lazy frames, forms, or real-time UI.

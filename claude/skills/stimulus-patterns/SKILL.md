@@ -10,6 +10,10 @@ user-invocable: false
 
 **Stimulus for sprinkles, not frameworks.** Use Stimulus to add behavior to server-rendered HTML, not to build SPAs.
 
+## Assumptions
+
+Examples assume Rails with Hotwire and importmap. If the repo uses jsbundling, Vite, or another bundler, keep the controller patterns but follow the repo's JavaScript registration and package installation conventions.
+
 ### What Stimulus is for:
 - Progressive enhancement (works without JS)
 - DOM manipulation (show/hide, toggle, animate)
@@ -241,3 +245,9 @@ connect() {
 ## Additional Resources
 
 - [Detailed controller examples](reference/controllers.md) — Full implementations for all 6 pattern categories, composition patterns, and testing examples
+
+## Agent Verification
+
+- Run focused system tests for the interaction or add one if the behavior is user-facing.
+- Manually smoke the controller in a browser when targets, values, lifecycle cleanup, or third-party libraries are involved.
+- Check that the no-JS fallback still works for progressive enhancement.

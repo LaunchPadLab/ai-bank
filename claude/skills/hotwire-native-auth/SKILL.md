@@ -52,6 +52,8 @@ Use `cookies.signed.permanent` so the session persists even after the native app
 
 **Rolling your own auth (or Rails 8 authentication generator):**
 
+Keep this cookie shape aligned with the web authentication concern and Action Cable connection. This skill standardizes on a signed, permanent `session_token` cookie whose value is `session.token`.
+
 ```ruby
 # app/controllers/concerns/authentication.rb
 def start_new_session_for(user)
@@ -60,8 +62,8 @@ def start_new_session_for(user)
     user_agent: request.user_agent
   )
   Current.session = session
-  cookies.signed.permanent[:session_id] = {
-    value: session.id, httponly: true, same_site: :lax
+  cookies.signed.permanent[:session_token] = {
+    value: session.token, httponly: true, same_site: :lax
   }
 end
 ```

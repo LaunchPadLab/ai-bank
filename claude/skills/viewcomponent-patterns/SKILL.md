@@ -492,3 +492,9 @@ Access at: `http://localhost:3000/rails/view_components`
 ## Reference
 
 - [Domain Patterns](reference/domain-patterns.md) — Design principles, complete component structures, Minitest tests, previews, collections, polymorphic slots, Stimulus integration, i18n, anti-patterns, and checklists
+
+## Agent Verification
+
+- Run focused component tests, for example `bin/rails test test/components/badge_component_test.rb`.
+- Open or smoke the component preview when markup, variants, slots, or styling changes.
+- Run a caller-level integration/system test when the component behavior depends on surrounding page context.

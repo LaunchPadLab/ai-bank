@@ -1,7 +1,7 @@
 ---
 name: rails-controller
 description: Creates Rails controllers with TDD approach - controller test first, then implementation. Use when creating new controllers, adding controller actions, implementing CRUD operations, or when user mentions controllers, routes, or API endpoints.
-allowed-tools: Read, Write, Edit, Bash(bin/rails test:*), Glob, Grep
+allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
 # Rails Controller Generator (TDD)

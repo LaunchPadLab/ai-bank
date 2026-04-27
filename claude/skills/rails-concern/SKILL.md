@@ -1,7 +1,7 @@
 ---
 name: rails-concern
 description: Creates Rails concerns for shared behavior across models or controllers with TDD. Use when extracting shared code, creating reusable modules, DRYing up models/controllers, or when user mentions concerns, modules, mixins, or shared behavior.
-allowed-tools: Read, Write, Edit, Bash(bin/rails test:*), Glob, Grep
+allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
 # Rails Concern Generator (TDD)

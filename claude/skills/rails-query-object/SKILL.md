@@ -1,7 +1,7 @@
 ---
 name: rails-query-object
 description: Creates query objects for complex database queries following TDD. Use when encapsulating complex queries, aggregating statistics, building reports, or when user mentions queries, stats, dashboards, or data aggregation.
-allowed-tools: Read, Write, Edit, Bash(bin/rails test:*), Glob, Grep
+allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
 # Rails Query Object Generator (TDD)

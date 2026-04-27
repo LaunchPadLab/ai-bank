@@ -747,3 +747,9 @@ When styling components or views:
 - Create overly complex custom CSS
 - Mix arbitrary values without justification (e.g., `w-[372px]`)
 - Skip focus states on interactive elements
+
+## Agent Verification
+
+- Smoke the changed view or component in a browser at mobile, tablet, and desktop widths.
+- Tab through interactive elements and verify focus states are visible.
+- Run component or system tests when styling changes affect conditional states or rendered structure.
