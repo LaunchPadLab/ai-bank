@@ -1,5 +1,4 @@
 ---
-alwaysApply: true
 ---
 
 # CLI Commands

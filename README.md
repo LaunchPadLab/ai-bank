@@ -804,10 +804,9 @@ ln -s /path/to/ai-bank/cursor/rules/hipaa-security /path/to/project/.cursor/rule
      - "test/models/**/*.rb"
    ---
    ```
-3. Use `alwaysApply: true` for rules that should always be available:
+3. Omit `paths` for rules that should always be available:
    ```markdown
    ---
-   alwaysApply: true
    ---
    ```
 4. Write concise, convention-focused instructions in the body

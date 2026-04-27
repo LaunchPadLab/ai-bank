@@ -24,7 +24,7 @@ BANNED_TERMS = [
 
 
 def parse_frontmatter(text):
-    match = re.match(r"^---\n(.*?)\n---\n?", text, re.DOTALL)
+    match = re.match(r"^---\n(.*?)---\n?", text, re.DOTALL)
     if not match:
         return None, text
 
@@ -76,9 +76,8 @@ def validate_rule(path):
         return [f"{path.name}: missing YAML frontmatter"]
 
     has_paths = "paths" in metadata
-    always_apply = metadata.get("alwaysApply") is True
-    if not has_paths and not always_apply:
-        errors.append(f"{path.name}: add paths or alwaysApply: true")
+    if "alwaysApply" in metadata:
+        errors.append(f"{path.name}: do not use Cursor alwaysApply in Claude rules; omit paths for global rules")
 
     if has_paths:
         paths = metadata["paths"]

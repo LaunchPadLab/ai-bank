@@ -1,6 +1,5 @@
 ---
 description: "Git and PR conventions"
-alwaysApply: true
 ---
 
 # Commits

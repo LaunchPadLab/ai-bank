@@ -16,15 +16,14 @@ paths:
 ---
 ```
 
-Always-available rules use `alwaysApply: true`:
+Always-available rules omit `paths`. Claude Code loads rules without `paths` at launch with the same priority as `.claude/CLAUDE.md`:
 
 ```yaml
 ---
-alwaysApply: true
 ---
 ```
 
-The local validator accepts either `paths` or `alwaysApply: true`. If the active Claude runner supports a different always-available convention, update this README and the validator together.
+Do not use Cursor's `alwaysApply` field in Claude rules. That field belongs to Cursor `RULE.md` / `.mdc` rules.
 
 ## Scope
 
@@ -41,4 +40,4 @@ Run after editing rules:
 python3 claude/rules/scripts/validate_rules.py claude/rules
 ```
 
-Context7 note: this cleanup attempted to validate Claude rule documentation with Context7, but the available MCP wrapper did not pass the required `query` and `libraryName` arguments. Until that is fixed, this directory follows the local `README.md` convention.
+Docs validation note: Context7 and Firecrawl MCP calls were blocked by a wrapper that did not pass required arguments. A web fallback against Claude Code memory documentation confirmed that `.claude/rules/` files without `paths` load unconditionally, and files with `paths` load when matching files are read.
