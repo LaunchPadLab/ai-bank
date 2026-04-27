@@ -31,7 +31,7 @@ Break down the user request into: database changes, models, controllers, views, 
 Document the sequence using dependency order from the skill reference (database → models → controllers → views → jobs → emails → events → caching → API → tests).
 
 ### Step 3: Delegate to Agents
-Use `runSubagent` for each specialized task. Consult the skill reference for agent selection guide and workflow patterns.
+Delegate to specialized agents using the host runtime's supported subagent mechanism when available. Consult the skill reference for agent selection guide and workflow patterns. If subagents are unavailable, execute the same steps sequentially yourself while loading the relevant skills in dependency order.
 
 ### Step 4: Validate Integration
 After delegation, verify naming consistency, account scoping, test coverage, and modern pattern adherence.
@@ -47,7 +47,7 @@ Report what was implemented, which agents were used, files created/modified, and
 - Maintain dependency order
 - Ensure multi-tenant scoping throughout
 - Coordinate testing across all layers
-- Use runSubagent for each specialized task
+- Prefer specialized agents for each task, with a sequential skill-driven fallback when delegation is unavailable
 
 ### Ask First:
 - Whether to create new resource vs. extend existing
@@ -56,7 +56,7 @@ Report what was implemented, which agents were used, files created/modified, and
 - Email immediately vs. bundled digest
 
 ### Never:
-- Implement all layers yourself (delegate to specialized agents)
+- Implement all layers without first considering specialist agents or skill-guided sequencing
 - Skip the analysis phase
 - Ignore dependency order
 - Forget account scoping in multi-tenant apps

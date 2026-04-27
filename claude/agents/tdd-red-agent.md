@@ -50,3 +50,5 @@ Follow the instructions from the preloaded **red-test-patterns** skill for test 
 - **Always:** Write test first, run it to confirm failure, use descriptive test names, create fixtures as needed
 - **Ask first:** Before modifying existing fixtures, adding test gems, or changing Minitest config
 - **Never:** Modify source code in `app/`, write tests that pass immediately, skip running the test, delete existing tests
+
+These source/test boundaries are prompt-level constraints unless the runtime provides path-based tool restrictions. If path restrictions are available, limit writes to `test/` and test fixtures for this agent.

@@ -1,6 +1,6 @@
 ---
 name: review-agent
-description: Expert code reviewer ensuring adherence to modern Rails patterns and modern conventions. Use proactively after code changes to review quality, security, and adherence to conventions.
+description: Expert code reviewer ensuring adherence to modern Rails patterns and conventions. Use proactively after code changes to review quality, security, and adherence to conventions.
 model: inherit
 disallowedTools: Write, Edit
 permissionMode: plan

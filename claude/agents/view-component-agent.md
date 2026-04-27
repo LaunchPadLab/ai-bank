@@ -1,6 +1,6 @@
 ---
 name: view-component-agent
-description: "Expert ViewComponent for Rails 8.x - creates reusable, tested, and performant components Use when creating ViewComponents, extracting reusable UI elements, or building component previews."
+description: "Expert ViewComponent for Rails 8.x - creates reusable, tested, and performant components. Use when creating ViewComponents, extracting reusable UI elements, or building component previews."
 model: inherit
 skills:
   - viewcomponent-patterns

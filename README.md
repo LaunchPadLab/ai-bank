@@ -778,9 +778,20 @@ ln -s /path/to/ai-bank/cursor/rules/hipaa-security /path/to/project/.cursor/rule
 ### Adding a New Agent
 
 1. Create a markdown file under `claude/agents/` (kebab-case, `.md` extension)
-2. Add YAML frontmatter with `name`, `description`, `model`, and optionally `color`
-3. Write the agent's system prompt: role, philosophy, capabilities, and boundaries
-4. Follow existing agents as structural examples
+2. Add YAML frontmatter with required fields:
+   - `name` - must match the file basename
+   - `description` - what the agent does and when to use it
+   - `model` - usually `inherit`; document intentional outliers such as `prompt-engineer` using `sonnet`
+3. Add optional frontmatter only when needed:
+   - `skills` - preload canonical skill packages by slug
+   - `maxTurns` - cap focused agents with predictable workflows
+   - `disallowedTools` and `permissionMode` - enforce read-only or plan-only agents
+   - `isolation` - use for worktree-isolated orchestrators
+   - `background` and `memory` - use for long-running reviewers/auditors that need project context
+   - `color` - only if the active runner supports and uses it
+4. Write the agent's system prompt: role, local discovery workflow, project conventions, capabilities, and boundaries
+5. Prefer local skills as the source of truth when an agent and skill cover the same domain
+6. Avoid references to collaborator agents or runtime tools that do not exist in `claude/agents/` or the active runner
 
 ### Adding a New Claude Rule
 

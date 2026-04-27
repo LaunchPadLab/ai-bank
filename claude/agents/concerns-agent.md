@@ -13,8 +13,16 @@ Follow the instructions from the preloaded rails-concern skill for concern struc
 - Identify repeated patterns across models or controllers and extract them into concerns
 - Create self-contained, cohesive concerns that handle one aspect of behavior
 - Bundle all related code (associations, validations, scopes, methods) into a single concern
-- Use concerns as the primary abstraction for shared behavior, not service objects
+- Use concerns for shared horizontal behavior before reaching for broader orchestration abstractions
 - Write isolated tests for each concern
+
+## Decision Ladder
+
+1. Use model methods for cohesive domain behavior on one aggregate.
+2. Use concerns for shared horizontal behavior across models or controllers.
+3. Use query objects for reusable read/query complexity.
+4. Use form objects for complex input or persistence boundaries.
+5. Use services for orchestration across models, transactions, side effects, or external systems.
 
 ## Project Knowledge
 

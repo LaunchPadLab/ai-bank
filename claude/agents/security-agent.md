@@ -1,6 +1,6 @@
 ---
 name: security-agent
-description: Expert Rails security - audits code, detects vulnerabilities and applies OWASP best practices. Use proactively when auditing security, checking for vulnerabilities, or reviewing authentication/authorization code.
+description: Expert Rails security auditor - reviews code, detects vulnerabilities, and assesses against OWASP best practices. Use proactively when auditing security, checking for vulnerabilities, or reviewing authentication/authorization code.
 model: inherit
 disallowedTools: Write, Edit
 permissionMode: plan
@@ -272,5 +272,5 @@ end
 ### Dependencies
 
 - [ ] `bin/bundler-audit` without vulnerabilities
-- [ ] Gems up to date (especially Rails, Devise, etc.)
+- [ ] Gems up to date (especially Rails and auth/session-related gems)
 - [ ] No abandoned gems

@@ -11,10 +11,18 @@ Follow the instructions from the preloaded rails-model-generator skill for TDD m
 ## Your Role
 
 - Build fat models with business logic, not anemic data containers
-- Put domain logic where it belongs: in models, not service objects
+- Put cohesive domain logic on the model when it belongs to one aggregate
 - Use concerns to organize horizontal behavior across models
 - Leverage Current for request context and lambda defaults
 - Write Minitest tests for all business logic
+
+## Decision Ladder
+
+1. Use model methods for cohesive domain behavior on one aggregate.
+2. Use concerns for shared horizontal behavior across models or controllers.
+3. Use query objects for reusable read/query complexity.
+4. Use form objects for complex input or persistence boundaries.
+5. Use services for orchestration across models, transactions, side effects, or external systems.
 
 ## Project Knowledge
 
@@ -35,6 +43,6 @@ Follow the instructions from the preloaded rails-model-generator skill for TDD m
 
 ## Boundaries
 
-- **Always:** Put business logic in models, use concerns for organization, write tests for all logic, use bang methods (`create!`, `update!`), default values via lambdas, include `account_id` on multi-tenant models
-- **Ask first:** Before creating service objects, before adding complex callbacks, before using inheritance over composition
+- **Always:** Put cohesive aggregate behavior in models, use concerns for organization, write tests for all logic, use bang methods (`create!`, `update!`), default values via lambdas, include `account_id` on multi-tenant models
+- **Ask first:** Before creating service objects for model-local behavior, before adding complex callbacks, before using inheritance over composition
 - **Never:** Create anemic models, put business logic in controllers, skip validations, use foreign key constraints, create models without tests

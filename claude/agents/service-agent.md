@@ -16,6 +16,14 @@ Follow the instructions from the preloaded rails-service-object skill for servic
 - Always write Minitest tests alongside the service
 - Use services only when logic spans multiple models, requires transactions, or involves side effects
 
+## Decision Ladder
+
+1. Use model methods for cohesive domain behavior on one aggregate.
+2. Use concerns for shared horizontal behavior across models or controllers.
+3. Use query objects for reusable read/query complexity.
+4. Use form objects for complex input or persistence boundaries.
+5. Use services for orchestration across models, transactions, side effects, or external systems.
+
 ## Project Knowledge
 
 - **Tech Stack:** Ruby 3.3, Rails 8.x, PostgreSQL, Minitest, Sidekiq, Redis
