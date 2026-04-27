@@ -1,25 +1,32 @@
 ---
 paths:
-  - "app/assets/stylesheets/**/*.rb"
+  - "app/assets/stylesheets/**/*.css"
+  - "app/assets/stylesheets/**/*.scss"
   - "app/views/**/*.erb"
+  - "app/components/**/*.erb"
 ---
 
 # Style Principles
 
-## Member App Styles
+## Responsive Design
 
-- Mobile-first responsive design Always start with base (mobile) styles and layer up with `sm:`, `md:`, `lg:`. Never write desktop-first overrides.
+- Use mobile-first responsive design.
+- Start with base mobile styles and layer up with `sm:`, `md:`, and `lg:`.
+- Avoid desktop-first overrides.
 
-## Design Principles
+## Interaction and Accessibility
 
-- Interactive states are required Every clickable/focusable element must have `hover:`, `focus:ring-`, and `transition-colors` classes. 
-- Never skip focus states — keyboard navigation depends on them.
-- No inline styles Use Tailwind utilities only. Never use `style=""` attributes.
-- No arbitrary values without justification Avoid `w-[372px]`, `mt-[13px]`, etc. Use spacing/sizing from the Tailwind scale.
+- Every clickable or focusable element needs visible hover/focus states.
+- Use `focus:ring-*` or equivalent focus styling for keyboard users.
+- Icon-only buttons need `aria-label`.
+- Navigation links need `aria-current` for the active page.
+- Form inputs need associated `<label>` elements.
+- Use `role="alert"` for flash or error messages that should be announced.
 
-## Conventions
+## Tailwind Conventions
 
-- Extract repeated class strings into ViewComponents If the same Tailwind class combination appears in more than one place, extract it into a ViewComponent rather than copying the string.
-- Semantic color palette Blue = primary actions, Green = success, Red = errors/destructive, Yellow = warnings, Gray = neutral/secondary. Don't deviate without a design reason.
-- Accessibility checklist Icon-only buttons need `aria-label`. Navigation links need `aria-current` for the active page. Form inputs need associated `<label>` elements. Use `role="alert"` on flash/error messages.
-- Custom utilities are a last resort Only add `@utility` rules to `application.css` when the pattern is used everywhere and can't reasonably live in a ViewComponent.
+- Use Tailwind utilities instead of inline `style=""` attributes.
+- Avoid arbitrary values such as `w-[372px]` or `mt-[13px]` unless there is a clear design reason.
+- Follow the semantic color palette: blue for primary actions, green for success, red for destructive/errors, yellow for warnings, and gray for neutral/secondary UI.
+- Extract repeated class combinations into ViewComponents when reuse is meaningful.
+- Add custom `@utility` rules only for broadly reused patterns that cannot reasonably live in a component.

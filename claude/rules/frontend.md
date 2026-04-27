@@ -2,12 +2,15 @@
 paths:
   - "**/*.js"
   - "**/*.ts"
-  - "app/javascript/"
+  - "app/javascript/**/*"
   - "package.json"
 ---
 
-# Frontend conventions
-- Stimulus + Turbo (Hotwire) preferred over SPAs
-- Focus on Hotwire Native decisions for Member app
-- JS lives in app/javascript/, keep it thin
-- No npm package without a conversation first
+# Frontend Conventions
+
+- Prefer Hotwire (Turbo + Stimulus) over SPA frameworks.
+- Keep JavaScript thin and focused on progressive enhancement.
+- Put Stimulus controllers in `app/javascript/controllers/`.
+- Use Turbo Frames and Turbo Streams for server-rendered UI updates.
+- Ask before adding npm packages or introducing a new frontend build stack.
+- For native shell decisions, defer to the Hotwire Native iOS/Android skills and app-specific files.

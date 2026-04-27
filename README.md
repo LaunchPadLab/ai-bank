@@ -796,7 +796,7 @@ ln -s /path/to/ai-bank/cursor/rules/hipaa-security /path/to/project/.cursor/rule
 ### Adding a New Claude Rule
 
 1. Create a markdown file under `claude/rules/` (kebab-case, `.md` extension)
-2. Add YAML frontmatter with `paths:` specifying which file patterns activate the rule:
+2. Add YAML frontmatter. Use `paths:` for file-specific rules:
    ```markdown
    ---
    paths:
@@ -804,8 +804,17 @@ ln -s /path/to/ai-bank/cursor/rules/hipaa-security /path/to/project/.cursor/rule
      - "test/models/**/*.rb"
    ---
    ```
-3. Write concise, convention-focused instructions in the body
-4. Rules without `paths:` are always available but not automatically activated
+3. Use `alwaysApply: true` for rules that should always be available:
+   ```markdown
+   ---
+   alwaysApply: true
+   ---
+   ```
+4. Write concise, convention-focused instructions in the body
+5. Validate rules:
+   ```bash
+   python3 claude/rules/scripts/validate_rules.py claude/rules
+   ```
 
 ### Adding a New Cursor Rule
 

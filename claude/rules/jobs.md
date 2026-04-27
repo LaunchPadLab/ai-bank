@@ -6,10 +6,12 @@ paths:
 
 # Background Job Conventions
 
-- Use Sidekiq
-- Jobs must be idempotent -- safe to retry
-- Pass IDs, not full objects (serialization safety)
-- Use `discard_on ActiveRecord::RecordNotFound` for deleted records
-- Use `retry_on` with specific exceptions and limits
-- Keep jobs focused: one job, one responsibility
-- Test with `have_enqueued_job` matcher
+- Use native Sidekiq jobs by default: `include Sidekiq::Job`.
+- Enqueue native jobs with `perform_async`, `perform_in`, or `perform_at`.
+- Configure retries with `sidekiq_options retry:`.
+- Jobs must be idempotent and safe to retry.
+- Pass IDs, not full objects, to avoid serialization and stale object issues.
+- Handle missing records explicitly inside `perform`.
+- Keep jobs focused: one job, one responsibility.
+- Test native jobs with `Sidekiq::Testing.fake!`, class `.jobs.size`, `.drain`, or inline mode.
+- Do not mix Active Job assertions with native Sidekiq jobs.

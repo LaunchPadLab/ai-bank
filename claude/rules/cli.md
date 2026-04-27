@@ -1,87 +1,74 @@
+---
+alwaysApply: true
+---
+
 # CLI Commands
 
-## Development Server
+## Routine Commands
+
 ```bash
-bin/dev                                          # Start all services (Foreman/Procfile.dev)
-bin/rails server                                 # Rails only (port 3000)
-bin/rails server -p 4000                         # Custom port
-bin/rails server -b 0.0.0.0                      # Bind to all interfaces
-lsof -i :3000                                    # Check what's using port 3000
-kill -9 $(lsof -t -i :3000)                      # Force kill process on port 3000
-cat tmp/pids/server.pid                          # Show stored server PID
-rm tmp/pids/server.pid                           # Remove stale PID file
+bin/dev
+bin/rails server
+bin/rails test
+bin/rails test test/models/user_test.rb
+bin/rails test test/models/user_test.rb:42
+bin/rails test:system
+bin/rails db:migrate
+bin/rails db:migrate:status
+bin/rails routes
+bin/rails routes -g user
+bin/rails console
+bin/rails runner "puts User.count"
+bin/brakeman --no-pager
+bundle exec bundler-audit check --update
+bundle install
+bundle update <gem>
 ```
 
-## Tests (Minitest)
+## Linting
+
 ```bash
-bin/rails test                                   # Full suite
-bin/rails test test/controllers                  # Directory
-bin/rails test test/models/article_test.rb       # Single file
-bin/rails test test/models/article_test.rb:6     # Single example (line)
-bin/rails test --fail-fast                       # Stop on first failure
-bin/rails test --backtrace                       # Displays the complete backtrace for failures and errors.
-bin/rails test --verbose                         # Verbose output
+bin/rubocop -a
+bin/rubocop app/models/
+bin/rubocop --only Style/StringLiterals
 ```
 
-## Linting (RuboCop)
-```bash
-bin/rubocop -a                                   # Auto-fix safe cops
-bin/rubocop -A                                   # Auto-fix all (including unsafe)
-bin/rubocop app/models/                          # Specific directory
-bin/rubocop --only Style/StringLiterals          # Single cop
-```
-
-## Security
-```bash
-bin/brakeman --no-pager                          # Static analysis
-bundle exec bundler-audit check --update         # Gem vulnerabilities
-```
-
-## Database
-```bash
-bin/rails db:create                              # Create database
-bin/rails db:migrate                             # Run pending migrations
-bin/rails db:rollback                            # Undo last migration
-bin/rails db:rollback STEP=3                     # Undo last 3 migrations
-bin/rails db:migrate:status                      # Show migration status
-bin/rails db:seed                                # Run seeds
-bin/rails db:reset                               # Drop, create, migrate, seed
-bin/rails db:schema:load                         # Load schema.rb (skip migrations)
-```
+Prefer `bin/rubocop -a` for safe autocorrect. Ask before running `bin/rubocop -A` because it applies unsafe corrections.
 
 ## Generators
+
 ```bash
-bin/rails g model User name:string email:string  # Model + migration + factory
-bin/rails g migration AddRoleToUsers role:integer # Migration only
-bin/rails g controller Users index show           # Controller + views + routes
-bin/rails destroy model User                      # Undo generator
+bin/rails g model User name:string email:string
+bin/rails g migration AddRoleToUsers role:integer
+bin/rails g controller Users index show
 ```
 
-## Rails Console
+Rails model generators create models and migrations. Add fixtures manually in `test/fixtures/` when tests need data.
+
+## Ask First or Local-Only Commands
+
+- `kill -9 $(lsof -t -i :3000)` - ask first; prefer graceful shutdown before force-killing.
+- `rm tmp/pids/server.pid` - use only for a confirmed stale local Rails PID.
+- `bin/rubocop -A` - ask first; unsafe autocorrect can change behavior.
+- `bin/rails db:rollback` - confirm scope and migration state first.
+- `bin/rails db:reset` - destructive; local-only and ask first.
+- `bin/rails db:schema:load` - destructive to the target database; ask first.
+- `bin/rails destroy ...` - destructive generator rollback; ask first.
+
+## Native Sidekiq
+
 ```bash
-bin/rails console                                # IRB with app loaded
-bin/rails console --sandbox                      # Auto-rollback on exit
-bin/rails routes                                 # All routes
-bin/rails routes -g user                         # Filter routes by pattern
+bundle exec sidekiq
+bundle exec sidekiq -C config/sidekiq.yml
 ```
 
-## Solid Queue (Background Jobs)
+Use native Sidekiq commands when the app uses Sidekiq jobs. Do not use another queue backend's commands unless the repo has explicitly chosen that backend.
+
+## Assets and JavaScript Dependencies
+
 ```bash
-bin/rails solid_queue:start                      # Start queue worker
+bin/importmap pin <package>
+bin/importmap unpin <package>
 ```
 
-## Assets & Dependencies
-```bash
-bundle install                                   # Install gems
-bundle update <gem>                              # Update specific gem
-bin/importmap pin <package>                      # Add JS dependency
-bin/importmap unpin <package>                    # Remove JS dependency
-```
-
-## Debugging
-```bash
-bin/rails runner "puts User.count"               # Run one-off script
-bin/rails dbconsole                              # Direct database CLI (psql)
-bin/rails middleware                              # List middleware stack
-bin/rails stats                                  # Code statistics
-```
+Ask before adding new JavaScript packages.

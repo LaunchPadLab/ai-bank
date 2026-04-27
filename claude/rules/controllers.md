@@ -6,10 +6,11 @@ paths:
 
 # Controller Conventions
 
-- Keep controllers thin: orchestrate, don't implement business logic
-- Delegate to service objects for anything beyond simple CRUD
-- Use strong parameters (`params.require(:x).permit(...)`)
-- Use presenters (`app/presenters/`) for view formatting, not controllers
-- Follow REST conventions: index, show, new, create, edit, update, destroy
-- Prefer `respond_to` with `format.html` and `format.turbo_stream` for Hotwire
-- Always test: authentication, authorization (404 for unauthorized), valid/invalid params
+- Prefer standard REST actions: `index`, `show`, `new`, `create`, `edit`, `update`, `destroy`.
+- Keep controllers focused on HTTP orchestration: load records, authorize, call domain behavior, and render/redirect.
+- Simple CRUD can stay directly in the controller.
+- Delegate when orchestration, transactions, side effects, external systems, or cross-model workflows justify it.
+- Use strong parameters with `params.require(...).permit(...)`.
+- Use presenters or ViewComponents for display formatting, not controllers.
+- Use `respond_to` with `format.html` and `format.turbo_stream` for Hotwire flows.
+- Always test authentication, authorization, valid params, invalid params, and cross-account isolation where relevant.

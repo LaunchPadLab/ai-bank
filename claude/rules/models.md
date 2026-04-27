@@ -6,13 +6,16 @@ paths:
 
 # Model Conventions
 
-- Keep models thin: data, validations, associations, scopes, simple predicates only
-- Complex business logic goes in service objects (`app/services/`)
-- Use callbacks only for data normalization (`before_validation`) and defaults (`after_initialize`)
-- Side effects (emails, API calls, job enqueueing) belong in services, not callbacks
-- Always specify `dependent:` on `has_many`/`has_one` associations
-- Use `enum :status, { draft: 0, published: 1 }` (hash syntax with explicit integers)
-- Validate presence at both model and database level (`null: false` in migration)
-- Use scopes for reusable queries; use query objects (`app/queries/`) for complex ones
-- Every model must have a fixtures in `test/fixtures/` with traits for each state
-- Every model must have seeds in `db/seeds.rb`
+- Put cohesive domain behavior on the model that owns the state.
+- Keep models focused: validations, associations, scopes, state transitions, predicates, and aggregate-local behavior.
+- Use concerns for shared horizontal behavior across models.
+- Use query objects for reusable read/query complexity.
+- Use form objects for complex input or persistence boundaries.
+- Use services for orchestration across models, transactions, side effects, or external systems.
+- Use callbacks only for local data normalization and defaults.
+- Do not trigger emails, API calls, or broad job orchestration from model callbacks.
+- Always specify `dependent:` on `has_many` and `has_one` associations.
+- Use enum hash syntax with explicit values, and avoid reserved column names such as `type`.
+- Validate required data in the model and with database constraints where appropriate.
+- Use scopes for simple reusable queries; use query objects for complex queries.
+- Provide fixtures for meaningful model states in `test/fixtures/`.
