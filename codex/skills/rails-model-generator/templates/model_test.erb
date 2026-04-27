@@ -1,0 +1,31 @@
+# frozen_string_literal: true
+
+require "test_helper"
+
+class <%= model_class_name %>Test < ActiveSupport::TestCase
+  test "valid fixture is valid" do
+    record = <%= fixture_name %>(:one)
+
+    assert record.valid?
+  end
+
+  test "requires required attributes" do
+    record = <%= model_class_name %>.new
+
+    assert_not record.valid?
+    assert record.errors.added?(:name, :blank)
+  end
+
+  test "enforces unique attributes case insensitively" do
+    existing = <%= fixture_name %>(:one)
+    record = <%= model_class_name %>.new(email: existing.email.upcase)
+
+    assert_not record.valid?
+    assert record.errors.added?(:email, :taken)
+  end
+
+  test "returns active records" do
+    assert_includes <%= model_class_name %>.active, <%= fixture_name %>(:active)
+    assert_not_includes <%= model_class_name %>.active, <%= fixture_name %>(:inactive)
+  end
+end

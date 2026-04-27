@@ -1,6 +1,6 @@
 # AI-BANK
 
-A centralized repository of AI tooling resources -- skills, agents, rules, Dockerfiles, templates, and guides -- for AI-powered development with Cursor and Claude Code.
+A centralized repository of AI tooling resources -- skills, agents, rules, Dockerfiles, templates, and guides -- for AI-powered development with Cursor, Claude Code, and OpenAI Codex.
 
 ---
 
@@ -29,6 +29,7 @@ A centralized repository of AI tooling resources -- skills, agents, rules, Docke
 
 **Repository Catalog**
 - [Directory Structure](#directory-structure)
+- [Codex Catalog](#codex-catalog)
 - [Claude Skills](#claude-skills)
 - [Claude Agents](#claude-agents)
 - [Claude Commands](#claude-commands)
@@ -265,6 +266,8 @@ OpenAI Codex is a terminal-based AI coding agent built in Rust. It functions as 
 - Slash commands: `/model`, `/permissions`, `/agent`, `/mcp`, `/plan`, `/personality`
 - Session continuity with `-c` flag for resuming previous sessions
 - Configurable via `AGENTS.md` (persistent instructions) and `config.toml` (user-level settings)
+- Custom subagents via TOML files in `.codex/agents/` or `~/.codex/agents/`
+- Skills via `SKILL.md` packages installed into a Codex skill root
 - Sandbox modes and approval policies for controlling agent autonomy
 
 **Benefits:**
@@ -446,6 +449,11 @@ The Dockerfile in this repository at [`cursor/docker/Dockerfile`](cursor/docker/
 
 ```
 ai-bank/
+├── codex/
+│   ├── agents/          # 42 Codex custom subagent TOML files
+│   ├── rules/           # 33 AGENTS.md templates scoped by directory
+│   ├── scripts/         # Transposition and validation scripts
+│   └── skills/          # 42 Codex-compatible skill packages
 ├── claude/
 │   ├── agents/          # 42 specialized agent definitions
 │   ├── commands/        # 6 workflow slash commands
@@ -458,6 +466,40 @@ ai-bank/
 └── resources/
     ├── documentation/   # AI usage and privacy guides
     └── mcp/             # MCP security guides
+```
+
+---
+
+### Codex Catalog
+
+The `codex/` directory contains Codex-native versions of the Claude assets in this repository:
+
+| Path | Purpose |
+|---|---|
+| [`codex/agents/`](codex/agents/) | Custom Codex subagents as TOML files. These are transposed from `claude/agents/*.md`. |
+| [`codex/skills/`](codex/skills/) | Codex skill packages with `SKILL.md`, references, scripts, templates, and assets. |
+| [`codex/rules/`](codex/rules/) | Directory-scoped `AGENTS.md` templates transposed from Claude `paths:` rules. |
+| [`codex/scripts/`](codex/scripts/) | Scripts for regenerating, validating, and auditing the transposed catalog. |
+
+Codex does not use Claude's `.claude/rules/*.md` `paths:` frontmatter. Instead, Codex loads `AGENTS.md` by directory scope: a root `AGENTS.md` applies broadly, while a nested file such as `app/models/AGENTS.md` applies to that directory and below. The templates under `codex/rules/` are meant to be copied into matching paths in a target project.
+
+Codex subagents are TOML files. Use project-scoped agents in `.codex/agents/` when they should belong to one repository, or personal agents in `~/.codex/agents/` when you want them available across projects.
+
+To regenerate the Codex catalog from the Claude source assets:
+
+```bash
+python3 codex/scripts/transpose_claude_skills.py
+python3 codex/scripts/transpose_claude_agents.py
+python3 codex/scripts/transpose_claude_rules.py
+```
+
+Validate the generated catalog before copying it into another setup:
+
+```bash
+python3 codex/scripts/validate_codex_skills.py codex/skills
+python3 codex/scripts/validate_codex_agents.py codex/agents
+python3 codex/scripts/validate_codex_rules.py codex/rules
+python3 codex/scripts/audit_transposition.py claude codex
 ```
 
 ---
@@ -737,6 +779,58 @@ cp claude/rules/controllers.md /path/to/project/.claude/rules/
 
 # Copy all rules at once
 cp claude/rules/*.md /path/to/project/.claude/rules/
+```
+
+### Using Codex Files Locally
+
+Use the `codex/` catalog when setting up OpenAI Codex. Agents, skills, and rules install to different places:
+
+```bash
+# Project-scoped Codex subagents
+mkdir -p /path/to/project/.codex/agents
+cp codex/agents/review-agent.toml /path/to/project/.codex/agents/
+cp codex/agents/model-agent.toml /path/to/project/.codex/agents/
+
+# Personal Codex subagents available across projects
+mkdir -p ~/.codex/agents
+cp codex/agents/rails-expert.toml ~/.codex/agents/
+```
+
+Install Codex skills by copying the whole skill package, not just `SKILL.md`:
+
+```bash
+# Project-local skills, if your Codex setup loads skills from the project
+mkdir -p /path/to/project/.codex/skills
+cp -r codex/skills/rails-controller /path/to/project/.codex/skills/
+cp -r codex/skills/tdd-cycle /path/to/project/.codex/skills/
+
+# Personal skills, if your Codex setup loads skills from ~/.codex/skills
+mkdir -p ~/.codex/skills
+cp -r codex/skills/rails-architecture ~/.codex/skills/
+```
+
+Install Codex rules by copying selected `AGENTS.md` templates into the matching directories of the target project:
+
+```bash
+# Root project guidance
+cp codex/rules/root/AGENTS.md /path/to/project/AGENTS.md
+
+# Directory-scoped guidance
+mkdir -p /path/to/project/app/models
+cp codex/rules/app/models/AGENTS.md /path/to/project/app/models/AGENTS.md
+
+mkdir -p /path/to/project/app/controllers
+cp codex/rules/app/controllers/AGENTS.md /path/to/project/app/controllers/AGENTS.md
+
+mkdir -p /path/to/project/db/migrate
+cp codex/rules/db/migrate/AGENTS.md /path/to/project/db/migrate/AGENTS.md
+```
+
+Symlinks work well if you want updates from this repository to propagate into a local Codex setup:
+
+```bash
+ln -s /path/to/ai-bank/codex/agents/review-agent.toml /path/to/project/.codex/agents/review-agent.toml
+ln -s /path/to/ai-bank/codex/skills/policy-patterns /path/to/project/.codex/skills/policy-patterns
 ```
 
 ### Using Rules in Cursor
