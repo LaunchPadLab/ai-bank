@@ -454,6 +454,7 @@ The Dockerfile in this repository at [`cursor/docker/Dockerfile`](cursor/docker/
 
 ```
 ai-bank/
+├── .claude-plugin/      # Plugin marketplace manifest (marketplace.json)
 ├── codex/
 │   ├── agents/          # 42 Codex custom subagent TOML files
 │   ├── rules/           # 33 AGENTS.md templates scoped by directory
@@ -468,6 +469,8 @@ ai-bank/
 ├── cursor/
 │   ├── docker/          # Dockerfile for Cursor Cloud Agent environments
 │   └── rules/           # 7 context-aware Cursor rules
+├── plugins/
+│   └── ai-bank/         # Claude Code plugin (hosted MCP connection config)
 ├── resources/
 │   ├── documentation/   # AI usage and privacy guides
 │   └── mcp/             # MCP security guides
