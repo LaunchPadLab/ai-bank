@@ -1,0 +1,34 @@
+name: Validate Claude plugin
+
+# Validates the marketplace catalog and the ai-bank plugin manifest on every PR/push
+# that touches them, so a malformed marketplace.json or plugin.json fails fast.
+# --strict treats unrecognized/misspelled manifest fields as errors.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".claude-plugin/**"
+      - "plugins/**"
+      - ".github/workflows/validate-plugin.yml"
+  pull_request:
+    paths:
+      - ".claude-plugin/**"
+      - "plugins/**"
+      - ".github/workflows/validate-plugin.yml"
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+      - name: Validate marketplace
+        run: claude plugin validate . --strict
+      - name: Validate plugin
+        run: claude plugin validate ./plugins/ai-bank --strict
