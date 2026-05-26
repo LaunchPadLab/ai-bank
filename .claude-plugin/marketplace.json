@@ -1,0 +1,12 @@
+{
+  "name": "launchpadlab",
+  "owner": { "name": "LaunchPadLab" },
+  "description": "LaunchPadLab Claude Code plugins.",
+  "plugins": [
+    {
+      "name": "ai-bank",
+      "source": "./plugins/ai-bank",
+      "description": "Read-only MCP access to the ai-bank catalog of Rails/Hotwire skills, agents, and rules."
+    }
+  ]
+}

@@ -480,6 +480,22 @@ ai-bank/
 
 The [`server/`](server/) directory is a read-only **MCP (Model Context Protocol) server** (Python / FastMCP) that exposes this repository's **Skills, Agents, and Rules** to any MCP client (Claude Code, Cursor, Codex). Rather than copying assets into each project, a connected agent can **search the catalog and fetch exactly what it needs on demand** -- and ask which conventions apply to a file before editing it. It reads `claude/` as the source of truth and also surfaces the five Render-only skills from `codex/skills/`. Every tool is annotated read-only; the server never writes to your repo.
 
+> **Hosted instance:** LaunchPadLab runs one at `https://ai-bank.launchpadlab.app/mcp` behind
+> Cloudflare Access. Browsers sign in with a `@launchpadlab.com` one-time PIN; MCP clients connect
+> with a Cloudflare service-token (or `cloudflared`) header — see [`server/README.md`](server/README.md)
+> for the exact client config.
+
+#### Install as a Claude Code plugin
+
+The easiest way to connect Claude Code to the hosted server is the **`ai-bank` plugin** in this repo's marketplace -- no manual `.mcp.json` editing:
+
+```bash
+/plugin marketplace add LaunchPadLab/ai-bank
+/plugin install ai-bank@launchpadlab
+```
+
+On enable, Claude Code prompts for a Cloudflare Access **service token** (Client ID + Secret, from the team secrets manager); the secret is stored in your OS keychain. To auto-enable it for a team, add the marketplace and `enabledPlugins` to a project's `.claude/settings.json` -- see [`plugins/ai-bank/README.md`](plugins/ai-bank/README.md). Non-plugin clients (Cursor, Codex) and local stdio runs still use the manual config below.
+
 **Tools** -- progressive disclosure, so `search`/`list_*` return lightweight summaries and `get_*` return full bodies:
 
 | Tool | Purpose |

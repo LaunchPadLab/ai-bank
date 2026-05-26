@@ -89,6 +89,52 @@ the package and the CWD for a directory containing both `claude/skills` and `cla
 
 ## Client configuration
 
+### Hosted instance — `https://ai-bank.launchpadlab.app/mcp`
+
+LaunchPadLab runs a shared instance behind **Cloudflare Access**. You can open the URL in a browser
+and sign in with a `@launchpadlab.com` one-time PIN — but that login is interactive, so an **MCP
+client cannot complete it**. Clients authenticate with a header credential instead. Two ways:
+
+**A. Service token (recommended; persistent).** Needs a Cloudflare **Service Token** plus a
+*Service Auth* policy on the Access app (see [deploy/cloudflare-access.md](deploy/cloudflare-access.md)).
+The one-time-PIN policy keeps working for browser users; the Service Auth policy lets clients in.
+
+```bash
+claude mcp add --transport http ai-bank https://ai-bank.launchpadlab.app/mcp \
+  --header "CF-Access-Client-Id: <id>.access" \
+  --header "CF-Access-Client-Secret: <secret>"
+```
+```jsonc
+// Claude Code .mcp.json  /  Cursor .cursor/mcp.json — same shape
+{ "mcpServers": { "ai-bank": {
+  "type": "http",
+  "url": "https://ai-bank.launchpadlab.app/mcp",
+  "headers": {
+    "CF-Access-Client-Id": "<id>.access",
+    "CF-Access-Client-Secret": "<secret>"
+  }
+} } }
+```
+Get the credentials from the team secrets manager; one service token per person makes per-user
+revocation easy.
+
+**B. `cloudflared` access token (works with the OTP-only policy; expires).** No extra Cloudflare
+setup, but the token is short-lived and must be refreshed:
+
+```bash
+cloudflared access login https://ai-bank.launchpadlab.app/mcp     # browser → @launchpadlab.com OTP
+cloudflared access token --app=https://ai-bank.launchpadlab.app   # prints a JWT
+```
+Add the JWT to the client as a `cf-access-token: <jwt>` header (same `headers` block as above), and
+re-run the two commands when it expires.
+
+> Codex is stdio-first and its remote-HTTP support is version-dependent, so Codex users may need the
+> **local** setup below instead.
+
+### Local server
+
+For running the server yourself (stdio, or HTTP on localhost):
+
 **Claude Code** — `.mcp.json` (committed at a repo root) or `claude mcp add`:
 
 ```jsonc
@@ -124,9 +170,11 @@ command = "/ABS/PATH/TO/ai-bank/server/.venv/bin/aibank-mcp"
 
 ## Self-hosting (remote team access)
 
-To give coworkers one shared endpoint, run the server in Docker behind **Cloudflare Access**
-(Google SSO restricted to your domain, plus a service token for the headless MCP client). The image
-is published to GHCR (`ghcr.io/launchpadlab/aibank-mcp`) by CI, so a host needs only
+To give coworkers one shared endpoint, run the server in Docker behind **Cloudflare Access** (a
+`@your-domain.com` identity policy — one-time PIN or Google SSO — for browser users, plus a service
+token for headless MCP clients). A shared instance is already live at
+`https://ai-bank.launchpadlab.app/mcp` (see [Hosted instance](#client-configuration) above to
+connect). The image is published to GHCR (`ghcr.io/launchpadlab/aibank-mcp`) by CI, so a host needs only
 [`docker-compose.yml`](docker-compose.yml) and a `.env` — no clone. The server binds the internal
 container network only and is reachable solely through the `cloudflared` tunnel, so Cloudflare
 Access is the auth layer and TLS is handled at the edge.
@@ -138,8 +186,8 @@ docker login ghcr.io          # only if the GHCR package is private
 docker compose pull && docker compose up -d
 ```
 
-Full walkthrough — publishing, tunnel, Access application + Google IdP, the `@your-domain.com`
-policy, the service token, and client headers — is in
+Full walkthrough — publishing, tunnel, Access application + identity method (one-time PIN or SSO),
+the `@your-domain.com` policy, the service token, and client headers — is in
 [`deploy/cloudflare-access.md`](deploy/cloudflare-access.md). It also weighs the alternatives
 (local-only stdio, Tailscale, a single shared token); a [`Dockerfile`](Dockerfile) +
 [`docker-compose.build.yml`](docker-compose.build.yml) support building from source.

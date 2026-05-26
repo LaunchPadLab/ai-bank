@@ -1,6 +1,6 @@
 # Self-hosting the ai-bank MCP server behind Cloudflare Access
 
-This guide stands up a single shared HTTPS endpoint (e.g. `https://aibank.launchpadlab.com/mcp`)
+This guide stands up a single shared HTTPS endpoint (e.g. `https://ai-bank.launchpadlab.app/mcp`)
 that coworkers connect to from Claude Code / Cursor. **Cloudflare Access** enforces auth at the
 edge — Google SSO restricted to `@launchpadlab.com` for people, and a **service token** for the
 (headless) MCP client. The server runs in a container reachable only through a Cloudflare Tunnel;
@@ -31,19 +31,24 @@ defense-in-depth you can additionally validate the Access JWT in-server — see
 1. Zero Trust dashboard → **Networks → Tunnels → Create a tunnel** → type **Cloudflared** → name it `aibank-mcp`.
 2. On the "Install connector" screen, copy the **tunnel token** (the long string after `cloudflared ... run`). You'll paste it into `.env`, not run the shown command — our compose file runs `cloudflared` for you.
 3. Add a **Public Hostname**:
-   - Subdomain `aibank`, Domain `launchpadlab.com` → `aibank.launchpadlab.com`
+   - Subdomain `ai-bank`, Domain `launchpadlab.app` → `ai-bank.launchpadlab.app`
    - Service: **HTTP** → URL **`aibank-mcp:8000`** (the compose service name; `cloudflared` resolves it on the internal network)
 
-## 2. Add Google as a login method
+## 2. Choose an identity method (for browser users)
 
-Zero Trust → **Settings → Authentication → Login methods → Add new → Google** (or Google Workspace),
-following Cloudflare's OAuth setup. This lets people sign in with their `@launchpadlab.com` Google account.
+Simplest is Access's built-in **One-time PIN** — no IdP setup, users get a code emailed to their
+`@launchpadlab.com` address (this is what the live instance uses). Alternatively add **Google**:
+Zero Trust → **Settings → Authentication → Login methods → Add new → Google**, following Cloudflare's
+OAuth setup. Either works as the identity method for the Allow policy in step 3.
+
+Note this identity login is **interactive (browser-only)** — it's for humans. MCP clients can't
+complete it, so they authenticate with the **service token** from step 4 (see step 6).
 
 ## 3. Protect the hostname with an Access application
 
 Zero Trust → **Access → Applications → Add an application → Self-hosted**.
 
-- **Application domain:** `aibank.launchpadlab.com`
+- **Application domain:** `ai-bank.launchpadlab.app`
 - **Identity providers:** enable Google.
 - Add two policies:
 
@@ -95,6 +100,11 @@ docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 
 ## 6. Connect a client
 
+The browser login (step 2) is for humans. **MCP clients send a header credential instead** — either
+the service token below (persistent, recommended) or a short-lived `cloudflared` token (option B).
+
+### A. Service token (recommended)
+
 **Claude Code** — add to `.mcp.json` (project or `~/.claude.json`):
 
 ```jsonc
@@ -102,7 +112,7 @@ docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
   "mcpServers": {
     "ai-bank": {
       "type": "http",
-      "url": "https://aibank.launchpadlab.com/mcp",
+      "url": "https://ai-bank.launchpadlab.app/mcp",
       "headers": {
         "CF-Access-Client-Id": "<client-id>.access",
         "CF-Access-Client-Secret": "<client-secret>"
@@ -115,15 +125,27 @@ docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 Or via the CLI:
 
 ```bash
-claude mcp add --transport http ai-bank https://aibank.launchpadlab.com/mcp \
+claude mcp add --transport http ai-bank https://ai-bank.launchpadlab.app/mcp \
   --header "CF-Access-Client-Id: <client-id>.access" \
   --header "CF-Access-Client-Secret: <client-secret>"
 ```
 
 **Cursor** — `.cursor/mcp.json`, same `url` + `headers` shape.
 
-Distribute the service-token credentials to coworkers through a secrets manager (1Password/Vault),
-not chat. A browser-capable MCP client may instead complete the interactive Google login.
+Distribute the service-token credentials through a secrets manager (1Password/Vault), not chat;
+issue one token per person for easy revocation.
+
+### B. `cloudflared` access token (no service token; expires)
+
+Works against the one-time-PIN policy with no extra Cloudflare config, but the token is short-lived:
+
+```bash
+cloudflared access login https://ai-bank.launchpadlab.app/mcp     # browser → @launchpadlab.com OTP
+cloudflared access token --app=https://ai-bank.launchpadlab.app   # prints a JWT
+```
+
+Put the JWT in the client as a `cf-access-token: <jwt>` header (same `headers` block as above), and
+re-run when it expires.
 
 > **Codex caveat:** Codex is stdio-first and its remote-HTTP MCP support is version-dependent.
 > Codex users may need the local stdio setup (see the main `server/README.md`) instead.

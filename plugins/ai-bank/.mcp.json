@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "ai-bank": {
+      "type": "http",
+      "url": "https://ai-bank.launchpadlab.app/mcp",
+      "headers": {
+        "CF-Access-Client-Id": "${user_config.cf_access_client_id}",
+        "CF-Access-Client-Secret": "${user_config.cf_access_client_secret}"
+      }
+    }
+  }
+}
