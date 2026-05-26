@@ -1,2 +1,11 @@
 __pycache__/
 *.pyc
+
+# aibank-mcp server (Python)
+server/.venv/
+server/dist/
+server/build/
+server/*.egg-info/
+server/src/*.egg-info/
+.pytest_cache/
+.ruff_cache/

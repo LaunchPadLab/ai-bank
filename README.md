@@ -209,6 +209,10 @@ The protocol uses JSON-RPC 2.0 and defines three primitives that servers can exp
 
 **Security note:** Running MCP servers locally without isolation gives them broad access to your machine. See the guide at [`resources/mcp/guides/securing_local_MCP_servers_with_docker.md`](resources/mcp/guides/securing_local_MCP_servers_with_docker.md) for how to sandbox MCP servers with Docker.
 
+### This repo ships its own MCP server
+
+[`server/`](server/README.md) is a read-only MCP server (Python / FastMCP) that exposes this knowledge base -- Skills, Agents, and Rules -- over stdio or streamable HTTP. Instead of copying files into a project, a client can `search` the catalog, fetch a skill/agent/rule, and call `get_rules_for_path` to learn which conventions apply to a file before editing it. See [`server/README.md`](server/README.md) to run it and connect Claude Code, Cursor, or Codex.
+
 ### Favorite MCPs
 
 - [`context7`](https://context7.com/)
