@@ -68,6 +68,7 @@ uvx --from "git+https://github.com/<org>/ai-bank.git#subdirectory=server" aibank
 | `--repo-root` | `AIBANK_REPO_ROOT` | auto-detect | Path to the ai-bank checkout. |
 | `--log-level` | `AIBANK_MCP_LOG_LEVEL` | `INFO` | Logs go to **stderr** only. |
 | `--no-render-skills` | `AIBANK_INCLUDE_RENDER=0` | included | Exclude the codex-only Render skills. |
+| `--allow-insecure-http` | `AIBANK_MCP_ALLOW_INSECURE_HTTP=1` | off | Permit a non-loopback bind without a token. Use ONLY behind an authenticating proxy or on a trusted private network. |
 | _(env only)_ | `AIBANK_MCP_TOKEN` | _unset_ | Static bearer token required for HTTP auth. |
 
 **Repo-root resolution**: `--repo-root`/`AIBANK_REPO_ROOT` → else auto-detect by walking up from
@@ -78,7 +79,9 @@ the package and the CWD for a directory containing both `claude/skills` and `cla
 - **stdio** runs as a local child process and needs no auth.
 - **HTTP** binds `127.0.0.1` by default. Set `AIBANK_MCP_TOKEN` to require an
   `Authorization: Bearer <token>` header. As a fail-safe, the server **refuses to start** on a
-  non-loopback host (e.g. `0.0.0.0`) unless a token is set.
+  non-loopback host (e.g. `0.0.0.0`) unless a token is set or `--allow-insecure-http` /
+  `AIBANK_MCP_ALLOW_INSECURE_HTTP=1` is given — the explicit opt-out for running behind an
+  authenticating proxy (see [Self-hosting](#self-hosting-remote-team-access)).
 - The static-token verifier stores the token in plaintext and is meant for simple
   team/internal use. For production, front the server with a TLS-terminating, authenticating
   reverse proxy (nginx/Caddy/Cloudflare Access) and bind to loopback. OAuth, rate limiting, and
@@ -118,6 +121,28 @@ command = "/ABS/PATH/TO/ai-bank/server/.venv/bin/aibank-mcp"
 ```
 
 > Cursor/Codex config shapes evolve — re-check against your installed versions.
+
+## Self-hosting (remote team access)
+
+To give coworkers one shared endpoint, run the server in Docker behind **Cloudflare Access**
+(Google SSO restricted to your domain, plus a service token for the headless MCP client). The image
+is published to GHCR (`ghcr.io/launchpadlab/aibank-mcp`) by CI, so a host needs only
+[`docker-compose.yml`](docker-compose.yml) and a `.env` — no clone. The server binds the internal
+container network only and is reachable solely through the `cloudflared` tunnel, so Cloudflare
+Access is the auth layer and TLS is handled at the edge.
+
+```bash
+# on the Docker host (just the compose file + a tunnel token):
+cp .env.example .env          # paste your Cloudflare tunnel token
+docker login ghcr.io          # only if the GHCR package is private
+docker compose pull && docker compose up -d
+```
+
+Full walkthrough — publishing, tunnel, Access application + Google IdP, the `@your-domain.com`
+policy, the service token, and client headers — is in
+[`deploy/cloudflare-access.md`](deploy/cloudflare-access.md). It also weighs the alternatives
+(local-only stdio, Tailscale, a single shared token); a [`Dockerfile`](Dockerfile) +
+[`docker-compose.build.yml`](docker-compose.build.yml) support building from source.
 
 ## Development
 

@@ -1,0 +1,32 @@
+# Self-hosted ai-bank MCP server behind a Cloudflare Tunnel + Cloudflare Access.
+# Full walkthrough: deploy/cloudflare-access.md
+#
+# Runs the image published to GHCR by CI — no repo clone required, just this file + a .env:
+#
+#   cp .env.example .env          # paste your Cloudflare tunnel token
+#   docker login ghcr.io          # only if the package is private
+#   docker compose pull
+#   docker compose up -d
+#
+# To build from source instead (inside a checkout), add the build override:
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+#
+# The MCP server publishes NO host port: it is reachable only via the cloudflared tunnel on the
+# internal compose network, and Cloudflare Access enforces Google SSO / service-token auth.
+
+services:
+  aibank-mcp:
+    image: ${AIBANK_IMAGE:-ghcr.io/launchpadlab/aibank-mcp}:${AIBANK_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    expose:
+      - "8000"          # internal to the compose network only; not published to the host
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      # In the tunnel's public-hostname config, point the route at: http://aibank-mcp:8000
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?Set CLOUDFLARE_TUNNEL_TOKEN — see deploy/cloudflare-access.md}
+    depends_on:
+      - aibank-mcp

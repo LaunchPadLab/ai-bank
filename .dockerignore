@@ -1,0 +1,14 @@
+# Keep the Docker build context lean and avoid leaking local/venv artifacts into the image.
+# NOTE: claude/, codex/, and server/ are required by the image and must NOT be ignored.
+.git/
+.github/
+**/.venv/
+**/__pycache__/
+**/*.pyc
+**/.pytest_cache/
+**/.ruff_cache/
+**/*.egg-info/
+server/dist/
+server/build/
+server/.env
+**/.DS_Store

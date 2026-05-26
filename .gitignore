@@ -7,5 +7,6 @@ server/dist/
 server/build/
 server/*.egg-info/
 server/src/*.egg-info/
+server/.env
 .pytest_cache/
 .ruff_cache/

@@ -24,6 +24,7 @@ ENV_PATH = "AIBANK_MCP_PATH"
 ENV_LOG_LEVEL = "AIBANK_MCP_LOG_LEVEL"
 ENV_TOKEN = "AIBANK_MCP_TOKEN"  # read from env, never a flag (avoids leaking via process list)
 ENV_INCLUDE_RENDER = "AIBANK_INCLUDE_RENDER"
+ENV_ALLOW_INSECURE = "AIBANK_MCP_ALLOW_INSECURE_HTTP"
 
 
 def _is_loopback(host: str) -> bool:
@@ -36,6 +37,16 @@ def _bool_env(name: str, default: bool) -> bool:
     if val is None:
         return default
     return val.strip().lower() not in {"0", "false", "no", "off", ""}
+
+
+def _should_refuse_http(host: str, has_token: bool, allow_insecure: bool) -> bool:
+    """True if HTTP must refuse to start: a non-loopback bind with no token and no opt-out.
+
+    ``allow_insecure`` is the deliberate escape hatch for running behind an authenticating
+    proxy (e.g. Cloudflare Access) or on a trusted private network, where the proxy/network
+    is the auth layer and the server itself need not require a token.
+    """
+    return not has_token and not _is_loopback(host) and not allow_insecure
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -61,6 +72,10 @@ def _build_parser() -> argparse.ArgumentParser:
                    help="Logging level (default: INFO; env %s)." % ENV_LOG_LEVEL)
     p.add_argument("--no-render-skills", action="store_true",
                    help="Exclude the codex-only Render skills (also via %s=0)." % ENV_INCLUDE_RENDER)
+    p.add_argument("--allow-insecure-http", action="store_true",
+                   help="Permit binding a non-loopback host without a token (also via %s=1). "
+                        "Use ONLY behind an authenticating proxy (e.g. Cloudflare Access) or on a "
+                        "trusted private network." % ENV_ALLOW_INSECURE)
     return p
 
 
@@ -86,21 +101,31 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     include_render = _bool_env(ENV_INCLUDE_RENDER, default=True) and not args.no_render_skills
+    allow_insecure = args.allow_insecure_http or _bool_env(ENV_ALLOW_INSECURE, default=False)
     token = os.environ.get(ENV_TOKEN)
 
     auth = None
     if args.transport == "http":
-        if token:
-            auth = _make_auth(token)
-        elif not _is_loopback(args.host):
+        if _should_refuse_http(args.host, bool(token), allow_insecure):
             logger.error(
                 "Refusing to start HTTP transport on non-loopback host %r without authentication. "
-                "Set %s to require a bearer token, bind to 127.0.0.1, or front the server with an "
-                "authenticating reverse proxy.",
+                "Set %s to require a bearer token, bind to 127.0.0.1, pass --allow-insecure-http "
+                "(only behind an authenticating proxy or on a trusted private network), or front "
+                "the server with an authenticating reverse proxy.",
                 args.host,
                 ENV_TOKEN,
             )
             return 2
+        if token:
+            auth = _make_auth(token)
+        elif not _is_loopback(args.host):
+            logger.warning(
+                "Serving HTTP on non-loopback host %r WITHOUT authentication (--allow-insecure-http "
+                "/ %s). Ensure an authenticating proxy such as Cloudflare Access sits in front, or "
+                "that this is a trusted private network.",
+                args.host,
+                ENV_ALLOW_INSECURE,
+            )
 
     mcp = build_server(repo_root, include_render_skills=include_render, auth=auth)
 
