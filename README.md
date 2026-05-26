@@ -29,6 +29,7 @@ A centralized repository of AI tooling resources -- skills, agents, rules, Docke
 
 **Repository Catalog**
 - [Directory Structure](#directory-structure)
+- [MCP Server](#mcp-server)
 - [Codex Catalog](#codex-catalog)
 - [Claude Skills](#claude-skills)
 - [Claude Agents](#claude-agents)
@@ -208,6 +209,10 @@ The protocol uses JSON-RPC 2.0 and defines three primitives that servers can exp
 - Context window constraints still apply -- fetched data counts against your token budget
 
 **Security note:** Running MCP servers locally without isolation gives them broad access to your machine. See the guide at [`resources/mcp/guides/securing_local_MCP_servers_with_docker.md`](resources/mcp/guides/securing_local_MCP_servers_with_docker.md) for how to sandbox MCP servers with Docker.
+
+### This repo ships its own MCP server
+
+This repository includes a read-only MCP server that exposes its own Skills, Agents, and Rules to any MCP client -- so an agent can `search` and fetch assets on demand instead of copying files. See [MCP Server](#mcp-server) under Repository Catalog for the tool reference, transports, security model, and setup.
 
 ### Favorite MCPs
 
@@ -463,10 +468,53 @@ ai-bank/
 ├── cursor/
 │   ├── docker/          # Dockerfile for Cursor Cloud Agent environments
 │   └── rules/           # 7 context-aware Cursor rules
-└── resources/
-    ├── documentation/   # AI usage and privacy guides
-    └── mcp/             # MCP security guides
+├── resources/
+│   ├── documentation/   # AI usage and privacy guides
+│   └── mcp/             # MCP security guides
+└── server/              # Read-only MCP server (Python/FastMCP) exposing the catalog
 ```
+
+---
+
+### MCP Server
+
+The [`server/`](server/) directory is a read-only **MCP (Model Context Protocol) server** (Python / FastMCP) that exposes this repository's **Skills, Agents, and Rules** to any MCP client (Claude Code, Cursor, Codex). Rather than copying assets into each project, a connected agent can **search the catalog and fetch exactly what it needs on demand** -- and ask which conventions apply to a file before editing it. It reads `claude/` as the source of truth and also surfaces the five Render-only skills from `codex/skills/`. Every tool is annotated read-only; the server never writes to your repo.
+
+**Tools** -- progressive disclosure, so `search`/`list_*` return lightweight summaries and `get_*` return full bodies:
+
+| Tool | Purpose |
+|---|---|
+| `search(query, kind, limit)` | Ranked keyword search across skills, agents, and rules |
+| `catalog_overview()` | Asset counts, whether Render skills are included, and any load warnings |
+| `list_skills(source)` / `get_skill(name)` | Skill summaries / full SKILL.md body, references, and the agents that use it |
+| `list_skill_references(name)` / `get_skill_reference(name, filename)` | A skill's supporting reference docs |
+| `list_agents()` / `get_agent(name)` | Agent summaries / full system prompt with resolved skill links |
+| `list_rules(include_general)` / `get_rule(name)` | Rule summaries / full rule body and path globs |
+| `get_rules_for_path(path, include_general)` | The convention rules that apply to a repo-relative file path, bodies inline -- call this before editing a file |
+
+**Resources:** JSON catalogs at `aibank://skills`, `aibank://agents`, `aibank://rules`, plus templated `aibank://skill/{name}`, `aibank://agent/{name}`, `aibank://rule/{name}`, and `aibank://skill/{name}/reference/{filename}`.
+
+**Prompts:** the six [`claude/commands`](claude/commands/) slash-commands, exposed as MCP prompts.
+
+**Transports & security:** stdio (default, launched by a local client) or streamable HTTP. HTTP binds `127.0.0.1` by default, accepts an optional static bearer token via `AIBANK_MCP_TOKEN`, and refuses to start on a non-loopback host without one. All logging goes to stderr so the stdio JSON-RPC channel stays clean.
+
+**Run it:**
+
+```bash
+cd server
+uv venv && uv pip install -e ".[dev]"   # Python >= 3.10
+uv run aibank-mcp                        # stdio (default)
+uv run aibank-mcp --transport http       # streamable HTTP on :8000
+uv run pytest                            # run the test suite
+```
+
+**Connect Claude Code** (an absolute path to the venv console script avoids PATH/activation issues):
+
+```bash
+claude mcp add ai-bank -- /path/to/ai-bank/server/.venv/bin/aibank-mcp
+```
+
+See [`server/README.md`](server/README.md) for the complete tool reference, all environment variables, the security model, and ready-to-paste client configuration for Claude Code, Cursor, and Codex.
 
 ---
 
