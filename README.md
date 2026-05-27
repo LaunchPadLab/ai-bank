@@ -30,6 +30,7 @@ A centralized repository of AI tooling resources -- skills, agents, rules, Docke
 **Repository Catalog**
 - [Directory Structure](#directory-structure)
 - [MCP Server](#mcp-server)
+- [Chat Web App](#chat-web-app)
 - [Codex Catalog](#codex-catalog)
 - [Claude Skills](#claude-skills)
 - [Claude Agents](#claude-agents)
@@ -213,6 +214,8 @@ The protocol uses JSON-RPC 2.0 and defines three primitives that servers can exp
 ### This repo ships its own MCP server
 
 This repository includes a read-only MCP server that exposes its own Skills, Agents, and Rules to any MCP client -- so an agent can `search` and fetch assets on demand instead of copying files. See [MCP Server](#mcp-server) under Repository Catalog for the tool reference, transports, security model, and setup.
+
+It also ships a **chat web app** so people -- not just agents -- can use the catalog: a browser UI where you ask a question and a Claude agent answers, grounded in the same Skills, Agents, and Rules and citing the assets it used. See [Chat Web App](#chat-web-app).
 
 ### Favorite MCPs
 
@@ -474,7 +477,7 @@ ai-bank/
 ├── resources/
 │   ├── documentation/   # AI usage and privacy guides
 │   └── mcp/             # MCP security guides
-└── server/              # Read-only MCP server (Python/FastMCP) exposing the catalog
+└── server/              # Python backend: read-only MCP server (FastMCP) + chat web app (FastAPI)
 ```
 
 ---
@@ -534,6 +537,27 @@ claude mcp add ai-bank -- /path/to/ai-bank/server/.venv/bin/aibank-mcp
 ```
 
 See [`server/README.md`](server/README.md) for the complete tool reference, all environment variables, the security model, and ready-to-paste client configuration for Claude Code, Cursor, and Codex.
+
+---
+
+### Chat Web App
+
+Alongside the MCP server, [`server/`](server/) ships a **chat web app** (FastAPI) that lets people -- not just AI tools -- use the catalog from a browser. You ask a natural-language question ("What skill helps with caching?", "Which rules apply to `app/models/user.rb`?", "Is there an agent for security review?") and a server-side **Claude Opus 4.7** agent answers, **grounded strictly in the catalog and citing the assets it used**. Citations link to an in-app viewer that renders the underlying SKILL.md / agent / rule, so you can read the source without leaving the page.
+
+It reuses the **same in-process `Catalog`** the MCP server does -- the agent calls the same read-only retrieval tools (`search`, `get_skill`, `get_agent`, `get_rule`, `get_rules_for_path`, `list_catalog`) in-process, so the chat and the MCP server always serve identical content with no duplicated logic. Answers stream over Server-Sent Events with live "searching the catalog…" / "reading skill X…" activity, and if a topic isn't in the catalog the agent says so rather than inventing an answer. The frontend is plain HTML/CSS/JS with no build step.
+
+> **Hosted instance:** the chat UI is served at the root of `https://ai-bank.launchpadlab.app/`, behind the same Cloudflare Access as the MCP server -- browsers sign in with a `@launchpadlab.com` one-time PIN, while `/mcp` continues to serve the MCP server for tools. The agent's `ANTHROPIC_API_KEY` lives server-side only and is never sent to the browser.
+
+**Run it locally:**
+
+```bash
+cd server
+uv venv && uv pip install -e ".[dev,web]"   # Python >= 3.10; the [web] extra adds FastAPI + the Anthropic SDK
+export ANTHROPIC_API_KEY=sk-ant-...          # server-side only; never sent to the browser
+uv run aibank-web                            # serves http://127.0.0.1:8001
+```
+
+The app ships in the **same Docker image** as the MCP server (run via the `aibank-web` console script); a second `docker-compose` service runs it behind the shared Cloudflare Tunnel. See [`server/deploy/cloudflare-access.md`](server/deploy/cloudflare-access.md) for the path-based routing (`/mcp*` → MCP server, everything else → chat app) and the full self-hosting walkthrough.
 
 ---
 
