@@ -1,0 +1,25 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "simple",
+  "include-v-in-tag": true,
+  "include-component-in-tag": false,
+  "changelog-sections": [
+    { "type": "feat", "section": "Features" },
+    { "type": "fix", "section": "Bug Fixes" },
+    { "type": "perf", "section": "Performance Improvements" },
+    { "type": "docs", "section": "Documentation" },
+    { "type": "refactor", "section": "Code Refactoring" },
+    { "type": "chore", "section": "Miscellaneous", "hidden": true }
+  ],
+  "packages": {
+    ".": {
+      "package-name": "ai-bank",
+      "extra-files": [
+        { "type": "json", "path": "plugins/ai-bank/.claude-plugin/plugin.json", "jsonpath": "$.version" },
+        { "type": "generic", "path": "server/pyproject.toml" },
+        { "type": "generic", "path": "server/src/aibank_mcp/__init__.py" },
+        { "type": "generic", "path": "server/src/aibank_web/__init__.py" }
+      ]
+    }
+  }
+}

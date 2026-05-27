@@ -5,6 +5,6 @@ A read-only Model Context Protocol server that exposes the ai-bank knowledge bas
 instead of copying files between projects.
 """
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"  # x-release-please-version
 
 __all__ = ["__version__"]
