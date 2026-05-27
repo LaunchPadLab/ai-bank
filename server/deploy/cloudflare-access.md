@@ -1,16 +1,25 @@
-# Self-hosting the ai-bank MCP server behind Cloudflare Access
+# Self-hosting ai-bank behind Cloudflare Access
 
-This guide stands up a single shared HTTPS endpoint (e.g. `https://ai-bank.launchpadlab.app/mcp`)
-that coworkers connect to from Claude Code / Cursor. **Cloudflare Access** enforces auth at the
-edge — Google SSO restricted to `@launchpadlab.com` for people, and a **service token** for the
-(headless) MCP client. The server runs in a container reachable only through a Cloudflare Tunnel;
-it never listens on a public port, and TLS is Cloudflare's responsibility.
+This guide stands up the ai-bank hostname (e.g. `https://ai-bank.launchpadlab.app`) behind
+**Cloudflare Access**, serving two apps from one tunnel:
+
+- **`/mcp`** — the read-only MCP server that coworkers connect to from Claude Code / Cursor.
+- **`/` (everything else)** — the **chat web app**, where people ask the catalog questions in a
+  browser. Its server-side agent calls the Claude API (needs `ANTHROPIC_API_KEY`).
+
+Access enforces auth at the edge — `@launchpadlab.com` SSO/one-time-PIN for people (browser login
+at `/`), and a **service token** for the headless MCP client at `/mcp`. Both apps run in containers
+reachable only through a Cloudflare Tunnel; neither listens on a public port, and TLS is
+Cloudflare's responsibility.
 
 ```
-Coworker's MCP client ──HTTPS──▶ Cloudflare edge (Access: Google SSO / service token)
-                                        │  authenticated requests only
-                                        ▼
-                              cloudflared tunnel ──▶ aibank-mcp:8000  (private compose network)
+Browser (chat) ──HTTPS──▶ Cloudflare edge (Access: @launchpadlab.com SSO)
+MCP client     ──HTTPS──▶ Cloudflare edge (Access: service token)
+                                 │  authenticated requests only
+                                 ▼
+                      cloudflared tunnel ─┬─ /mcp*  ──▶ aibank-mcp:8000  (MCP server)
+                                          └─ (else)  ──▶ aibank-web:8000  (chat web app)
+                                                          (one private compose network)
 ```
 
 Because the catalog is **read-only, non-sensitive reference content**, this "trust the proxy"
@@ -30,9 +39,19 @@ defense-in-depth you can additionally validate the Access JWT in-server — see
 
 1. Zero Trust dashboard → **Networks → Tunnels → Create a tunnel** → type **Cloudflared** → name it `aibank-mcp`.
 2. On the "Install connector" screen, copy the **tunnel token** (the long string after `cloudflared ... run`). You'll paste it into `.env`, not run the shown command — our compose file runs `cloudflared` for you.
-3. Add a **Public Hostname**:
-   - Subdomain `ai-bank`, Domain `launchpadlab.app` → `ai-bank.launchpadlab.app`
-   - Service: **HTTP** → URL **`aibank-mcp:8000`** (the compose service name; `cloudflared` resolves it on the internal network)
+3. Add **Public Hostnames** for `ai-bank.launchpadlab.app`. Ingress rules are evaluated
+   top-to-bottom (first match wins), so order matters — put the `/mcp` rule first:
+
+   | Order | Subdomain / Domain | Path | Service (HTTP) |
+   |---|---|---|---|
+   | 1 | `ai-bank` / `launchpadlab.app` | `/mcp*` | `aibank-mcp:8000` |
+   | 2 | `ai-bank` / `launchpadlab.app` | *(leave Path empty — catch-all)* | `aibank-web:8000` |
+
+   (`aibank-mcp` / `aibank-web` are the compose service names; `cloudflared` resolves them on the
+   internal network.) In the dashboard, the **Path** field for rule 1 is `mcp*` (it matches `/mcp`
+   and everything under it); rule 2 has no path and catches the chat app at `/`, `/api/...`,
+   `/a/...`, and `/assets/...`. If you are still running MCP-only (no web app yet), keep just the
+   single hostname pointing at `aibank-mcp:8000` and add the split when you deploy the web app.
 
 ## 2. Choose an identity method (for browser users)
 
@@ -60,6 +79,14 @@ Zero Trust → **Access → Applications → Add an application → Self-hosted*
   The Allow policy covers humans using a browser-capable client; the Service Auth policy lets the
   headless MCP client through with token headers.
 
+  **One application covers the whole hostname** — both `/` (chat) and `/mcp`. So browser users get
+  the interactive login on the chat app automatically, and MCP service tokens keep working at
+  `/mcp`; the two credential types don't interfere. A valid service token can technically also
+  reach `/` (harmless — a headless client just gets HTML it ignores). If you want strict
+  separation, split into two path-scoped Access applications — one for
+  `ai-bank.launchpadlab.app/mcp` with both policies, one for the catch-all path with only the
+  Allow policy — but that's optional hardening, not required.
+
 ## 4. Create a service token for MCP clients
 
 Zero Trust → **Access → Service Auth → Create Service Token** → name it (e.g. `mcp-client`).
@@ -76,13 +103,20 @@ host you need only `docker-compose.yml` and a `.env` — no repo clone:
 ```bash
 mkdir aibank-mcp && cd aibank-mcp
 curl -fsSLO https://raw.githubusercontent.com/LaunchPadLab/ai-bank/main/server/docker-compose.yml
-printf 'CLOUDFLARE_TUNNEL_TOKEN=%s\n' '<your-tunnel-token>' > .env
+{
+  printf 'CLOUDFLARE_TUNNEL_TOKEN=%s\n' '<your-tunnel-token>'
+  printf 'ANTHROPIC_API_KEY=%s\n'       '<your-anthropic-api-key>'   # for the chat web app
+} > .env
 docker login ghcr.io          # only if the package is private (see Publishing)
 docker compose pull
 docker compose up -d
 ```
 
-The server runs on the internal network with no published host port, and `cloudflared` registers
+`ANTHROPIC_API_KEY` is used only by the `aibank-web` service and stays server-side (never sent to
+the browser). Omit it if you're deploying the MCP server only — the web container still starts but
+its chat endpoint returns a "not configured" error until the key is set.
+
+Both apps run on the internal network with no published host port, and `cloudflared` registers
 the tunnel. Check it:
 
 ```bash

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ai-bank</title>
+    <link rel="stylesheet" href="/assets/css/app.css" />
+    <script src="/assets/js/vendor/marked.min.js"></script>
+    <script src="/assets/js/vendor/dompurify.min.js"></script>
+  </head>
+  <body class="viewer">
+    <div class="app">
+      <header class="topbar">
+        <a class="back" href="/">← Back to chat</a>
+      </header>
+      <main id="asset" class="asset" aria-live="polite">
+        <p class="loading">Loading…</p>
+      </main>
+    </div>
+    <script type="module" src="/assets/js/asset.js"></script>
+  </body>
+</html>

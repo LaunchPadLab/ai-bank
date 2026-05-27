@@ -21,8 +21,11 @@ ENV PYTHONUNBUFFERED=1 \
 WORKDIR /app
 
 # Install the server package first so editing catalog content doesn't bust the dependency layer.
+# The [web] extra adds the chat web app's deps (anthropic, fastapi, uvicorn). The image bundles
+# BOTH the `aibank-mcp` and `aibank-web` console scripts; docker-compose picks which to run per
+# service. Static frontend assets ship as package data under src/aibank_web/web/static/.
 COPY server/ /app/server/
-RUN pip install /app/server
+RUN pip install "/app/server[web]"
 
 # Catalog content, read at runtime (claude/ is canonical; codex/ supplies the Render skills).
 COPY claude/ /app/claude/

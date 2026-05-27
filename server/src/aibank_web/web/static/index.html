@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ai-bank assistant</title>
+    <meta name="description" content="Ask questions about the ai-bank catalog of Skills, Agents, and Rules." />
+    <link rel="stylesheet" href="/assets/css/app.css" />
+    <script src="/assets/js/vendor/marked.min.js"></script>
+    <script src="/assets/js/vendor/dompurify.min.js"></script>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">◆</span>
+          <span class="brand-name">ai-bank assistant</span>
+        </div>
+        <p class="tagline">Grounded in the Skills, Agents &amp; Rules catalog</p>
+      </header>
+
+      <main id="log" class="log" role="log" aria-live="polite" aria-relevant="additions text" aria-label="Conversation">
+        <div class="msg assistant intro">
+          <div class="bubble">
+            <div class="content">
+              <p>Ask me about the ai-bank catalog — its skills, specialist agents, and coding rules. I answer only from the catalog and cite the assets I use.</p>
+              <p>Try:</p>
+              <ul>
+                <li>“What skill helps with caching?”</li>
+                <li>“Which rules apply to <code>app/models/user.rb</code>?”</li>
+                <li>“How should I write a service object?”</li>
+                <li>“Is there an agent for security review?”</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <form id="composer" class="composer" autocomplete="off">
+        <label class="sr-only" for="input">Your question</label>
+        <textarea id="input" rows="1" placeholder="Ask about a skill, agent, rule, or best practice…" aria-label="Your question"></textarea>
+        <div class="composer-actions">
+          <button id="stop" type="button" class="btn btn-ghost" hidden aria-label="Stop generating">Stop</button>
+          <button id="send" type="submit" class="btn btn-primary">Send</button>
+        </div>
+      </form>
+    </div>
+
+    <script type="module" src="/assets/js/app.js"></script>
+  </body>
+</html>
