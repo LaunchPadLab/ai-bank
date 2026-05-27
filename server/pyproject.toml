@@ -18,13 +18,23 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# The chat web app. Kept optional so `pip install .` (MCP server only) stays lean on
+# `fastmcp`. `anthropic` and `fastapi` are the genuinely new deps; uvicorn/starlette/
+# sse-starlette/pydantic already arrive transitively via fastmcp.
+web = [
+  "anthropic>=0.69,<1",
+  "fastapi>=0.115",
+  "uvicorn>=0.30",
+  "sse-starlette>=2",
+]
 dev = ["pytest>=8", "pytest-asyncio>=0.23", "ruff>=0.6"]
 
 [project.scripts]
 aibank-mcp = "aibank_mcp.cli:main"
+aibank-web = "aibank_web.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/aibank_mcp"]
+packages = ["src/aibank_mcp", "src/aibank_web"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

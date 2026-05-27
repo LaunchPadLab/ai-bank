@@ -11,3 +11,7 @@ services:
     build:
       context: ..
       dockerfile: server/Dockerfile
+  aibank-web:
+    build:
+      context: ..
+      dockerfile: server/Dockerfile

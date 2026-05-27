@@ -11,8 +11,16 @@
 # To build from source instead (inside a checkout), add the build override:
 #   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 #
-# The MCP server publishes NO host port: it is reachable only via the cloudflared tunnel on the
-# internal compose network, and Cloudflare Access enforces Google SSO / service-token auth.
+# Neither app publishes a host port: both are reachable only via the cloudflared tunnel on the
+# internal compose network, and Cloudflare Access enforces SSO / service-token auth.
+#
+# Tunnel routing (configure path-based public-hostname rules in the Zero Trust dashboard,
+# evaluated top-to-bottom — see deploy/cloudflare-access.md):
+#   ai-bank.launchpadlab.app   path /mcp*   ->  http://aibank-mcp:8000   (MCP server)
+#   ai-bank.launchpadlab.app   (catch-all)  ->  http://aibank-web:8000   (chat web app)
+#
+# Both services run from the SAME image (built/pulled once) so they always share one catalog
+# snapshot; they differ only in the console script they run.
 
 services:
   aibank-mcp:
@@ -21,12 +29,24 @@ services:
     expose:
       - "8000"          # internal to the compose network only; not published to the host
 
+  aibank-web:
+    image: ${AIBANK_IMAGE:-ghcr.io/launchpadlab/aibank-mcp}:${AIBANK_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    command: ["aibank-web"]
+    environment:
+      # Server-side only; never sent to the browser, never set on the aibank-mcp service.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      AIBANK_WEB_HOST: "0.0.0.0"
+      AIBANK_WEB_PORT: "8000"
+    expose:
+      - "8000"          # internal to the compose network only; not published to the host
+
   cloudflared:
     image: cloudflare/cloudflared:latest
     restart: unless-stopped
     command: tunnel --no-autoupdate run
     environment:
-      # In the tunnel's public-hostname config, point the route at: http://aibank-mcp:8000
       TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?Set CLOUDFLARE_TUNNEL_TOKEN — see deploy/cloudflare-access.md}
     depends_on:
       - aibank-mcp
+      - aibank-web
