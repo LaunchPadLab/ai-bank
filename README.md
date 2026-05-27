@@ -503,6 +503,59 @@ The easiest way to connect Claude Code to the hosted server is the **`ai-bank` p
 
 On enable, Claude Code prompts for a Cloudflare Access **service token** (Client ID + Secret, from the team secrets manager); the secret is stored in your OS keychain. To auto-enable it for a team, add the marketplace and `enabledPlugins` to a project's `.claude/settings.json` -- see [`plugins/ai-bank/README.md`](plugins/ai-bank/README.md). Non-plugin clients (Cursor, Codex) and local stdio runs still use the manual config below.
 
+#### Connect a CLI to the hosted server manually
+
+The hosted instance sits behind **Cloudflare Access**. A browser login uses a `@launchpadlab.com` one-time PIN, but an MCP client can't complete that interactive flow -- so clients authenticate with a header credential instead. Two options:
+
+**Option A -- Cloudflare service token (recommended; persistent).** Get the Client ID + Secret from the team secrets manager, then add the server over HTTP:
+
+```bash
+claude mcp add --transport http ai-bank https://ai-bank.launchpadlab.app/mcp \
+  --header "CF-Access-Client-Id: <id>.access" \
+  --header "CF-Access-Client-Secret: <secret>"
+```
+
+Or commit/edit `.mcp.json` (Cursor `.cursor/mcp.json` uses the same shape):
+
+```jsonc
+{ "mcpServers": { "ai-bank": {
+  "type": "http",
+  "url": "https://ai-bank.launchpadlab.app/mcp",
+  "headers": {
+    "CF-Access-Client-Id": "<id>.access",
+    "CF-Access-Client-Secret": "<secret>"
+  }
+} } }
+```
+
+One service token per person makes per-user revocation easy.
+
+**Option B -- `cloudflared` access token (works with the OTP-only policy; expires).** No extra Cloudflare setup, but the token is short-lived and must be refreshed:
+
+```bash
+cloudflared access login https://ai-bank.launchpadlab.app/mcp     # browser -> @launchpadlab.com OTP
+cloudflared access token --app=https://ai-bank.launchpadlab.app   # prints a JWT
+```
+
+Add the JWT to the client as a `cf-access-token: <jwt>` header (same `headers` block as above), and re-run the two commands when it expires.
+
+**Cursor** -- add the server in `.cursor/mcp.json` (project-scoped) or `~/.cursor/mcp.json` (global). It uses the same schema as Claude Code's `.mcp.json`:
+
+```jsonc
+{ "mcpServers": { "ai-bank": {
+  "type": "http",
+  "url": "https://ai-bank.launchpadlab.app/mcp",
+  "headers": {
+    "CF-Access-Client-Id": "<id>.access",
+    "CF-Access-Client-Secret": "<secret>"
+  }
+} } }
+```
+
+After saving, open **Cursor Settings -> MCP** and confirm `ai-bank` shows as connected (toggle it on if needed). For the `cloudflared` route (Option B), swap the two `CF-Access-*` headers for a single `cf-access-token: <jwt>` header.
+
+**Codex CLI** -- Codex is stdio-first and its remote-HTTP support is version-dependent, so the hosted URL may not work reliably; if it does in your version, configure it in `~/.codex/config.toml` with the same `CF-Access-*` headers. Otherwise use the local stdio setup below ("Run it"), which sidesteps Cloudflare Access entirely.
+
 **Tools** -- progressive disclosure, so `search`/`list_*` return lightweight summaries and `get_*` return full bodies:
 
 | Tool | Purpose |
