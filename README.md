@@ -44,6 +44,7 @@ A centralized repository of AI tooling resources -- skills, agents, rules, Docke
 **Usage**
 - [Getting Started](#getting-started)
 - [Contributing](#contributing)
+- [Versioning & Releases](#versioning--releases)
 
 ---
 
@@ -1019,3 +1020,23 @@ ln -s /path/to/ai-bank/cursor/rules/hipaa-security /path/to/project/.cursor/rule
 - Keep SKILL.md bodies under 500 lines; move detailed content to `references/` files
 - Descriptions in frontmatter are the primary mechanism for AI triggering -- make them specific and include use-case examples
 - Test skills and agents on real tasks before contributing
+
+---
+
+## Versioning & Releases
+
+This repository follows [Semantic Versioning](https://semver.org). All published components -- the `aibank-mcp` MCP server, the `aibank-web` chat app, and the `ai-bank` Claude Code plugin -- share a **single unified version**, with the full history in [`CHANGELOG.md`](CHANGELOG.md).
+
+Releases are automated with [release-please](https://github.com/googleapis/release-please). Each merge to `main` updates a standing **release pull request** that bumps the version across `server/pyproject.toml`, both `server/src/*/__init__.py` files, and `plugins/ai-bank/.claude-plugin/plugin.json`, and regenerates the changelog. Merging that PR tags `vX.Y.Z`, publishes a GitHub Release, and triggers the multi-arch Docker build (`ghcr.io/launchpadlab/aibank-mcp:X.Y.Z`).
+
+Because the version bump and changelog are derived from commit history, **write commit and PR-title subjects as [Conventional Commits](https://www.conventionalcommits.org)**:
+
+| Prefix | Effect | Example |
+|---|---|---|
+| `fix:` | patch (`x.y.Z`) | `fix: correct rule path matching` |
+| `feat:` | minor (`x.Y.0`) | `feat: add search ranking by recency` |
+| `feat!:` or a `BREAKING CHANGE:` footer | major (`X.0.0`) | `feat!: drop stdio transport` |
+
+Commits without a recognized type are omitted from the changelog. This convention is recommended, not enforced by CI.
+
+> **Maintainer note:** so that the tag release-please pushes triggers the Docker publish workflow, add a fine-grained PAT or GitHub App token as the `RELEASE_PLEASE_TOKEN` repository secret (Contents + Pull requests: read/write). Without it, releases still work but the image must be built from the tag manually. See [`server/README.md`](server/README.md) for image details.

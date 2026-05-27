@@ -1,0 +1,26 @@
+name: Release Please
+
+# Maintains a standing release PR that bumps every version file + CHANGELOG from
+# Conventional Commits. Merging that PR tags vX.Y.Z and cuts a GitHub Release;
+# the existing mcp-server-image.yml then builds/publishes the Docker image on the v* tag.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          # A PAT or GitHub App token in RELEASE_PLEASE_TOKEN lets the pushed v* tag
+          # trigger mcp-server-image.yml. The default GITHUB_TOKEN also works for opening
+          # the release PR, but tags it pushes will NOT trigger that workflow (GitHub's
+          # recursion guard) -- see the "Versioning & Releases" section in the README.
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
