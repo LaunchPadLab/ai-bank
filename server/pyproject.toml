@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "aibank-mcp"
-version = "1.0.0"  # x-release-please-version
+version = "1.0.1"  # x-release-please-version
 description = "MCP server exposing the ai-bank Skills/Agents/Rules knowledge base (read-only)."
 readme = "README.md"
 requires-python = ">=3.10"

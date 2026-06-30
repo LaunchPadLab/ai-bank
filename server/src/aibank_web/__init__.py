@@ -8,4 +8,4 @@ hop to the MCP server, no duplicate retrieval logic.
 
 from __future__ import annotations
 
-__version__ = "1.0.0"  # x-release-please-version
+__version__ = "1.0.1"  # x-release-please-version
