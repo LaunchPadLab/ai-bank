@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases are automated with [release-please](https://github.com/googleapis/release-please);
 entries are generated from [Conventional Commit](https://www.conventionalcommits.org) messages.
 
+## [1.0.1](https://github.com/LaunchPadLab/ai-bank/compare/v1.0.0...v1.0.1) (2026-06-30)
+
+
+### Documentation
+
+* add Claude Code system prompt customization field guide ([#8](https://github.com/LaunchPadLab/ai-bank/issues/8)) ([0f69e1d](https://github.com/LaunchPadLab/ai-bank/commit/0f69e1d93eb3b882df5e174b8af06a37feaf0fc5))
+* add Claude vs OpenAI model/effort selection guide ([#10](https://github.com/LaunchPadLab/ai-bank/issues/10)) ([e99aa4a](https://github.com/LaunchPadLab/ai-bank/commit/e99aa4affbbf75744b58f75cd6fccf563ad438ef))
+
 ## [1.0.0] - 2026-05-27
 
 Initial public release of the **ai-bank** catalog and tooling.
