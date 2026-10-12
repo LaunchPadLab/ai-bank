@@ -718,7 +718,7 @@ Skills live in `claude/skills/` and are organized by domain. To use a skill in a
 
 | Skill | Description |
 |---|---|
-| [`render-operations`](claude/skills/render-operations/) | Render CLI runbooks for deployment status and build failures, app and infrastructure logs, environment configuration, and failed-deploy recovery, plus a guarded remediation script for OOM crash loops and broken live releases |
+| [`render-operations`](claude/skills/render-operations/) | Render CLI runbooks for deployment status and build failures, app and infrastructure logs, environment configuration, failed-deploy recovery, Rails 8 Blueprint and Solid Queue/Sidekiq setup, and read-only database and job diagnostics, plus a guarded remediation script for OOM crash loops and broken live releases |
 
 #### Meta
 
@@ -801,7 +801,7 @@ Agents live in `claude/agents/`. To use an agent in a project, copy or symlink t
 | [`performance-monitor`](claude/agents/performance-monitor.md) | System-wide metrics, anomaly detection, and observability |
 | [`postgres-pro`](claude/agents/postgres-pro.md) | PostgreSQL administration, internals, and performance |
 | [`prompt-engineer`](claude/agents/prompt-engineer.md) | Designs, optimizes, and evaluates prompts for production LLM systems |
-| [`render-ops-agent`](claude/agents/render-ops-agent.md) | Render deploy status, logs, env config, failed-deploy recovery, and guarded remediation (plan, approve, apply, verify) |
+| [`render-ops-agent`](claude/agents/render-ops-agent.md) | Render deploy status, logs, env config, failed-deploy recovery, Solid Queue and Postgres diagnostics, and guarded remediation (plan, approve, apply, verify) |
 | [`review-agent`](claude/agents/review-agent.md) | Code review for adherence to modern Rails patterns and conventions |
 | [`security-agent`](claude/agents/security-agent.md) | Rails security auditing, vulnerability detection, and OWASP best practices |
 
@@ -892,7 +892,7 @@ Use this Dockerfile as the environment definition for Cursor Cloud Agent tasks. 
 | [`resources/documentation/ai_usage.md`](resources/documentation/ai_usage.md) | Data privacy guide for AI coding tools: training policies, privacy modes, compliance certifications, and configuration checklists for Cursor, Claude Code, GitHub Copilot, Windsurf, and others |
 | [`resources/documentation/customizing_claude_code_system_prompt.md`](resources/documentation/customizing_claude_code_system_prompt.md) | Field guide to shaping Claude Code's behavior on Rails: how the system prompt composes, CLAUDE.md/rules, CLI prompt flags, output styles, hooks, subagents, settings layering, and why to avoid unofficial binary patching |
 | [`resources/documentation/choosing_claude_openai_models_and_effort.md`](resources/documentation/choosing_claude_openai_models_and_effort.md) | Rails developer's decision guide for picking Claude vs. OpenAI model tiers and reasoning-effort levels (mid-2026): exact model IDs and pricing, the `effort`/`reasoning_effort` knobs, caching/batch discounts, Ruby SDK snippets, and a tiered-routing framework |
-| [`resources/documentation/render_infrastructure_agent_playbook.md`](resources/documentation/render_infrastructure_agent_playbook.md) | Internal playbook for running Claude Code agents against Render: dedicated agent user and roles, a Claude Code permissions block, layered safety controls, escalation rules, audit trail, and Green/Yellow/Red use cases |
+| [`resources/documentation/render_infrastructure_agent_playbook.md`](resources/documentation/render_infrastructure_agent_playbook.md) | Internal playbook for running Claude Code agents against Render: dedicated agent user and roles, a Claude Code permissions block, layered safety controls, escalation rules, audit trail, Green/Yellow/Red use cases, headless CI triage, and a project CLAUDE.md snippet |
 | [`resources/mcp/guides/securing_local_MCP_servers_with_docker.md`](resources/mcp/guides/securing_local_MCP_servers_with_docker.md) | Security guide for running MCP servers in Docker: NGinx proxy, NGrok, and Pinggy tunnel approaches with step-by-step setup |
 
 ---
