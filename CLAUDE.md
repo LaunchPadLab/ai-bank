@@ -11,7 +11,7 @@ The assets under `claude/rules/`, `claude/agents/`, etc. are **templates meant f
 ## Content layout and source of truth
 
 - `claude/` is the **canonical source**: `skills/<name>/SKILL.md` (+ `reference/` or `references/`), `agents/*.md`, `rules/*.md` (optional `paths:` glob frontmatter), and `commands/*.md`.
-- `codex/` is **generated** from `claude/` by the transposition scripts. Edit the Claude asset and regenerate; don't hand-edit the Codex copy. The one exception is the five Render-only skills (`render-*`), which exist only in `codex/skills/`.
+- `codex/` is **generated** from `claude/` by the transposition scripts. Edit the Claude asset and regenerate; don't hand-edit the Codex copy. The one exception is the five vendored Render-only skills (`render-debug`, `render-deploy`, `render-migrate-from-heroku`, `render-monitor`, `render-workflows`), which exist only in `codex/skills/`. The transposition, audit, and validation scripts skip them through `CODEX_ONLY_SKILL_NAMES` in `codex/scripts/codex_transpose.py`, which must stay in sync with `RENDER_ONLY_SKILL_NAMES` in `server/src/aibank_mcp/loader.py`. The canonical `render-operations` skill lives in `claude/` like any other skill.
 - `cursor/rules/<name>/RULE.md` uses Cursor frontmatter (`description`, `globs`, `alwaysApply`). Never put `alwaysApply` in Claude rules.
 - `plugins/ai-bank/` + `.claude-plugin/marketplace.json` is a Claude Code plugin that only connects to the hosted MCP server.
 

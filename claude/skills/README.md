@@ -67,6 +67,7 @@ Fields such as `context`, `agent`, `argument-hint`, `user-invocable`, and `disab
   - Performance: N+1 queries, query plans, memory, profiling, Bullet.
   - Authentication: sign in/out and sessions.
   - Authorization: Pundit policies and permission rules.
+  - Render: `render-operations` handles operating services that are already deployed (deploy status, logs, env vars, rollback). The Codex-only `render-deploy` handles first deploys and `render.yaml` generation, and `render-debug`/`render-monitor` are its MCP-first counterparts.
 
 ## Verification Sections
 
