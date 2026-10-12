@@ -26,6 +26,7 @@ Optional fields:
 - `hotwire-native-ios-agent` and `hotwire-native-android-agent` own platform-specific Hotwire Native work and preload auth/path-config support.
 - `test-agent`, `tdd-red-agent`, and `tdd-refactoring-agent` own testing and TDD phase workflows.
 - `performance-monitor`, `database-optimizer`, `postgres-pro`, `caching-agent`, and `review-agent` share performance ownership by layer.
+- `render-ops-agent` owns Render operations (deploy status, logs, env config, recovery) and preloads `render-operations`.
 - Skills without dedicated agents should be invoked by the closest owning agent rather than duplicated in prompt bodies.
 
 ## Prompt Guidelines

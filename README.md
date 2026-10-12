@@ -460,15 +460,15 @@ The Dockerfile in this repository at [`cursor/docker/Dockerfile`](cursor/docker/
 ai-bank/
 ├── .claude-plugin/      # Plugin marketplace manifest (marketplace.json)
 ├── codex/
-│   ├── agents/          # 42 Codex custom subagent TOML files
+│   ├── agents/          # 43 Codex custom subagent TOML files
 │   ├── rules/           # 33 AGENTS.md templates scoped by directory
 │   ├── scripts/         # Transposition and validation scripts
-│   └── skills/          # 42 Codex-compatible skill packages
+│   └── skills/          # 48 Codex-compatible skill packages (43 transposed + 5 Render-only)
 ├── claude/
-│   ├── agents/          # 42 specialized agent definitions
+│   ├── agents/          # 43 specialized agent definitions
 │   ├── commands/        # 6 workflow slash commands
 │   ├── rules/           # 20 path-activated Claude Code rules
-│   └── skills/          # 42 domain-specific skills with reference materials
+│   └── skills/          # 43 domain-specific skills with reference materials
 ├── claude-md-templates/ # Reusable CLAUDE.md templates
 ├── cursor/
 │   ├── docker/          # Dockerfile for Cursor Cloud Agent environments
@@ -714,6 +714,12 @@ Skills live in `claude/skills/` and are organized by domain. To use a skill in a
 | [`feature-spec`](claude/skills/feature-spec/) | Structured interview for creating complete feature specifications |
 | [`implement-patterns`](claude/skills/implement-patterns/) | Feature orchestration recipes, agent coordination, and dependency ordering |
 
+#### Deployment and Operations
+
+| Skill | Description |
+|---|---|
+| [`render-operations`](claude/skills/render-operations/) | Render CLI runbooks for deployment status and build failures, app and infrastructure logs, environment configuration, and failed-deploy recovery |
+
 #### Meta
 
 | Skill | Description |
@@ -795,6 +801,7 @@ Agents live in `claude/agents/`. To use an agent in a project, copy or symlink t
 | [`performance-monitor`](claude/agents/performance-monitor.md) | System-wide metrics, anomaly detection, and observability |
 | [`postgres-pro`](claude/agents/postgres-pro.md) | PostgreSQL administration, internals, and performance |
 | [`prompt-engineer`](claude/agents/prompt-engineer.md) | Designs, optimizes, and evaluates prompts for production LLM systems |
+| [`render-ops-agent`](claude/agents/render-ops-agent.md) | Render deploy status, logs, env config, and guarded failed-deploy recovery |
 | [`review-agent`](claude/agents/review-agent.md) | Code review for adherence to modern Rails patterns and conventions |
 | [`security-agent`](claude/agents/security-agent.md) | Rails security auditing, vulnerability detection, and OWASP best practices |
 

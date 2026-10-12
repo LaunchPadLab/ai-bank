@@ -5,7 +5,7 @@ import re
 import sys
 from pathlib import Path
 
-from codex_transpose import CLAUDE_ONLY_SKILL_KEYS, hyphen_case, parse_frontmatter, strip_generated_artifacts
+from codex_transpose import CLAUDE_ONLY_SKILL_KEYS, CODEX_ONLY_SKILL_NAMES, hyphen_case, parse_frontmatter, strip_generated_artifacts
 
 
 ALLOWED_FRONTMATTER = {"name", "description"}
@@ -26,13 +26,15 @@ def validate_skill(skill_dir):
     if missing:
         errors.append(f"{skill_dir}: missing field(s): {', '.join(sorted(missing))}")
 
-    unexpected = set(metadata) - ALLOWED_FRONTMATTER
-    if unexpected:
-        errors.append(f"{skill_dir}: unexpected frontmatter field(s): {', '.join(sorted(unexpected))}")
+    # Vendored Render skills keep their upstream frontmatter (license, compatibility, metadata).
+    if skill_dir.name not in CODEX_ONLY_SKILL_NAMES:
+        unexpected = set(metadata) - ALLOWED_FRONTMATTER
+        if unexpected:
+            errors.append(f"{skill_dir}: unexpected frontmatter field(s): {', '.join(sorted(unexpected))}")
 
-    claude_only = set(metadata) & CLAUDE_ONLY_SKILL_KEYS
-    if claude_only:
-        errors.append(f"{skill_dir}: Claude-only frontmatter field(s): {', '.join(sorted(claude_only))}")
+        claude_only = set(metadata) & CLAUDE_ONLY_SKILL_KEYS
+        if claude_only:
+            errors.append(f"{skill_dir}: Claude-only frontmatter field(s): {', '.join(sorted(claude_only))}")
 
     name = metadata.get("name")
     if name:

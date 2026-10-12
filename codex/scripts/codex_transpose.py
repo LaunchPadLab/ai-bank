@@ -18,6 +18,15 @@ CLAUDE_ONLY_SKILL_KEYS = {
     "license",
     "metadata",
 }
+# Render skills vendored directly into codex/skills with no claude/ source.
+# Keep in sync with RENDER_ONLY_SKILL_NAMES in server/src/aibank_mcp/loader.py.
+CODEX_ONLY_SKILL_NAMES = frozenset({
+    "render-debug",
+    "render-deploy",
+    "render-migrate-from-heroku",
+    "render-monitor",
+    "render-workflows",
+})
 CLAUDE_ONLY_AGENT_KEYS = {
     "maxTurns",
     "permissionMode",

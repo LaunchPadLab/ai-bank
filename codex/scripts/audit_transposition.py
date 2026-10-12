@@ -5,7 +5,7 @@ import sys
 import tomllib
 from pathlib import Path
 
-from codex_transpose import parse_frontmatter
+from codex_transpose import CODEX_ONLY_SKILL_NAMES, parse_frontmatter
 
 
 def claude_agent_names(root):
@@ -74,7 +74,7 @@ def main():
     errors = []
 
     report("agents", claude_agent_names(claude_root), codex_agent_names(codex_root), errors)
-    report("skills", claude_skill_names(claude_root), codex_skill_names(codex_root), errors)
+    report("skills", claude_skill_names(claude_root), codex_skill_names(codex_root) - CODEX_ONLY_SKILL_NAMES, errors)
     report("rules", claude_rule_paths(claude_root), codex_rule_sources(codex_root), errors)
 
     if errors:

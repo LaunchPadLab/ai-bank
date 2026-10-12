@@ -8,6 +8,7 @@ from pathlib import Path
 
 from codex_transpose import (
     CLAUDE_ONLY_SKILL_KEYS,
+    CODEX_ONLY_SKILL_NAMES,
     codex_text,
     read_markdown_with_frontmatter,
     strip_generated_artifacts,
@@ -58,9 +59,14 @@ def normalize_skill_md(skill_md):
 
 
 def transpose(source, output):
-    if output.exists():
-        shutil.rmtree(output)
-    output.mkdir(parents=True)
+    output.mkdir(parents=True, exist_ok=True)
+    for child in output.iterdir():
+        if child.name in CODEX_ONLY_SKILL_NAMES:
+            continue
+        if child.is_dir():
+            shutil.rmtree(child)
+        else:
+            child.unlink()
 
     count = 0
     for skill_dir in source_skill_dirs(source):
