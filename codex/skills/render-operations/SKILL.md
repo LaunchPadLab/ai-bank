@@ -1,6 +1,6 @@
 ---
 name: "render-operations"
-description: "Day-2 operations runbooks for services already running on Render, driven by the Render CLI with Render MCP and REST API fallbacks. Use when checking Render deployment status, investigating a build_failed, pre_deploy_failed, or update_failed deployment, reading Render app, request, or build logs, inspecting OOM kills or restarts, managing Render environment variables, env groups, or secret files, or running a rollback and recovering from a failed Render deployment. For first-time setup and render.yaml generation use render-deploy; for Heroku moves use render-migrate-from-heroku."
+description: "Day-2 operations runbooks for services already running on Render, driven by the Render CLI with Render MCP and REST API fallbacks. Use when checking Render deployment status, investigating a build_failed, pre_deploy_failed, or update_failed deployment, reading Render app, request, or build logs, inspecting OOM kills or restarts, managing Render environment variables, env groups, or secret files, or running a rollback and recovering from a failed Render deployment, or applying a guarded fix for an OOM crash loop or a broken live release. For first-time setup and render.yaml generation use render-deploy; for Heroku moves use render-migrate-from-heroku."
 ---
 
 <!-- Codex transposition: omitted Claude-specific frontmatter fields: allowed-tools, argument-hint. -->
@@ -11,7 +11,7 @@ description: "Day-2 operations runbooks for services already running on Render, 
 
 ## Overview
 
-Four documented workflows for operating an app that is already on Render. Each one is a step-by-step runbook with exact commands, a symptom → cause → fix table, Rails notes, and a "done when" check.
+Documented workflows for operating an app that is already on Render, plus a guarded remediation script for two known issues. Each workflow is a step-by-step runbook with exact commands, a symptom → cause → fix table, Rails notes, and a "done when" check.
 
 | Situation | Workflow |
 |---|---|
@@ -19,6 +19,7 @@ Four documented workflows for operating an app that is already on Render. Each o
 | Errors in production, 5xx spikes, slow requests, OOM, restarts, cron or datastore logs | [Application and infrastructure logs](references/logs.md) |
 | Add, change, audit, or rotate env vars, env groups, secret files, Blueprint `envVars` | [Environment configuration](references/environment-configuration.md) |
 | Production is broken after a release, or a deploy failed and needs a way back | [Failed deployment recovery](references/failed-deploy-recovery.md) |
+| A known issue (OOM crash loop, broken live release) that needs a fix, not just a diagnosis | [Guarded remediation](references/guarded-remediation.md) |
 
 Start with the workflow that matches the symptom. They link to each other where one hands off to another, for example a build failure caused by a missing env var.
 
@@ -57,6 +58,7 @@ The CLI does not cover everything. When it cannot do a step, the workflow names 
 | Health check, auto-deploy, maintenance mode | `render services update <srv> ...` | — | `PATCH /services/{id}` |
 | Validate Blueprint | `render blueprints validate [render.yaml]` | — | — |
 | Shell / psql | `render ssh <srv>`, `render psql <db>` | `query_render_postgres` (read-only) | — |
+| Guarded fix (OOM step-down, rollback) | — (remediation script: `scripts/render_remediate.py plan` / `apply`) | — | Called by the script: single-key env `PUT`, `PATCH`, rollback, deploy |
 
 Verified against Render CLI v2.22 through v2.28, where none of the gaps marked "—" have a CLI command. Re-check with `render <command> --help` on newer versions.
 
@@ -78,6 +80,7 @@ Also:
 - Never `PUT /services/{id}/env-vars` (the collection) without first showing the user the full diff. It **replaces every var**, and any key you omit is deleted.
 - Never delete services or datastores from this workflow.
 - State the workspace and service ID in every proposal for a mutating action, so the user can catch a wrong target.
+- Run `render_remediate.py apply` only after the user approves that specific `plan.md`, and never edit `plan.json` by hand.
 
 ## Rails on Render: Quick Checklist
 

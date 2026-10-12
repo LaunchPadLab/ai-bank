@@ -142,6 +142,8 @@ render logs -r <srv> --type app --start 30m --direction forward -o text   # boot
 
 Confirm with `server_failed` events carrying `oomKilled` and with the memory metric. A crash loop shows repeated `server_failed` plus `server_restarted` events and the same boot error each time; read the first error after each boot, not the last.
 
+Once confirmed, [guarded-remediation.md](guarded-remediation.md) can plan and apply a `WEB_CONCURRENCY` step-down (or a rollback of a crash-looping release) with guards and verification.
+
 ### 7. Cron jobs, workers, and datastores
 
 ```bash

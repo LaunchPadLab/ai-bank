@@ -72,7 +72,7 @@ Then fix the cause on a branch, merge, and let auto-deploy ship it (or trigger i
 
 ### 4. Roll back to a previous deploy
 
-There is no CLI command and no MCP tool for rollback. Use the dashboard or the REST API.
+There is no CLI command and no MCP tool for rollback. Use the dashboard or the REST API. When the live release is crash-looping, the guarded script in [guarded-remediation.md](guarded-remediation.md) automates this step (auto-deploy off first, then rollback) and verifies the result.
 
 **Dashboard:** Service, then Deploys, then Rollback on the known-good deploy. This **disables auto-deploy** automatically.
 
@@ -156,7 +156,7 @@ Then work through **Done When** and write the incident note.
 | Deploy stuck in `build_in_progress` | Hung build step (for example a Docker image without CMD) | Cancel (step 3), fix, redeploy |
 | `live` but 5xx everywhere | Bad code | Roll back (step 4) or redeploy known-good SHA (step 5) |
 | `live`, errors like `PG::UndefinedColumn` | Code and schema out of step | Fix forward, or roll back only if schema is still compatible |
-| `live`, `Killed` / exit code 137 loop | OOM, often unset `WEB_CONCURRENCY` | Roll back or set `WEB_CONCURRENCY` and redeploy; see [logs.md](logs.md) |
+| `live`, `Killed` / exit code 137 loop | OOM, often unset `WEB_CONCURRENCY` | Roll back or set `WEB_CONCURRENCY` and redeploy; see [logs.md](logs.md). [guarded-remediation.md](guarded-remediation.md) automates the step-down with verification |
 | Boot fails with `ActiveSupport::MessageEncryptor::InvalidMessage` or missing credentials | Wrong or missing `RAILS_MASTER_KEY` | Revert env var (step 8) |
 | Bad commit re-deployed after rollback | API rollback left auto-deploy on | `--auto-deploy=false`, roll back again, merge the fix |
 | Rollback target missing from the dashboard | Artifact no longer retained | Redeploy the SHA (step 5) |

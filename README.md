@@ -718,7 +718,7 @@ Skills live in `claude/skills/` and are organized by domain. To use a skill in a
 
 | Skill | Description |
 |---|---|
-| [`render-operations`](claude/skills/render-operations/) | Render CLI runbooks for deployment status and build failures, app and infrastructure logs, environment configuration, and failed-deploy recovery |
+| [`render-operations`](claude/skills/render-operations/) | Render CLI runbooks for deployment status and build failures, app and infrastructure logs, environment configuration, and failed-deploy recovery, plus a guarded remediation script for OOM crash loops and broken live releases |
 
 #### Meta
 
@@ -801,7 +801,7 @@ Agents live in `claude/agents/`. To use an agent in a project, copy or symlink t
 | [`performance-monitor`](claude/agents/performance-monitor.md) | System-wide metrics, anomaly detection, and observability |
 | [`postgres-pro`](claude/agents/postgres-pro.md) | PostgreSQL administration, internals, and performance |
 | [`prompt-engineer`](claude/agents/prompt-engineer.md) | Designs, optimizes, and evaluates prompts for production LLM systems |
-| [`render-ops-agent`](claude/agents/render-ops-agent.md) | Render deploy status, logs, env config, and guarded failed-deploy recovery |
+| [`render-ops-agent`](claude/agents/render-ops-agent.md) | Render deploy status, logs, env config, failed-deploy recovery, and guarded remediation (plan, approve, apply, verify) |
 | [`review-agent`](claude/agents/review-agent.md) | Code review for adherence to modern Rails patterns and conventions |
 | [`security-agent`](claude/agents/security-agent.md) | Rails security auditing, vulnerability detection, and OWASP best practices |
 
