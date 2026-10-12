@@ -271,6 +271,14 @@ web: bin/rails server
 worker: bundle exec sidekiq -C config/sidekiq.yml
 ```
 
+### Deploying on Render
+
+- Run Sidekiq as a `type: worker` service, backed by a **dedicated** Key Value instance with `maxmemoryPolicy: noeviction`. The default eviction policy silently drops jobs.
+- Use a paid Key Value plan, because the free plan has no persistence. Free plans don't offer background workers either.
+- Wire `REDIS_URL` into both the web service and the worker with `fromService: { type: keyvalue, name: ..., property: connectionString }`.
+- If you also want a Redis cache store, use a separate `allkeys-lru` instance.
+- For the full Blueprint and the Solid Queue trade-off, see the `render-operations` skill (`references/rails-blueprint-and-jobs.md`).
+
 ## Monitoring
 
 ### Web UI
