@@ -476,7 +476,7 @@ ai-bank/
 ├── plugins/
 │   └── ai-bank/         # Claude Code plugin (hosted MCP connection config)
 ├── resources/
-│   ├── documentation/   # AI usage, privacy, and Claude Code customization guides
+│   ├── documentation/   # AI usage, privacy, Claude Code customization, and Render agent playbook
 │   └── mcp/             # MCP security guides
 └── server/              # Python backend: read-only MCP server (FastMCP) + chat web app (FastAPI)
 ```
@@ -892,6 +892,7 @@ Use this Dockerfile as the environment definition for Cursor Cloud Agent tasks. 
 | [`resources/documentation/ai_usage.md`](resources/documentation/ai_usage.md) | Data privacy guide for AI coding tools: training policies, privacy modes, compliance certifications, and configuration checklists for Cursor, Claude Code, GitHub Copilot, Windsurf, and others |
 | [`resources/documentation/customizing_claude_code_system_prompt.md`](resources/documentation/customizing_claude_code_system_prompt.md) | Field guide to shaping Claude Code's behavior on Rails: how the system prompt composes, CLAUDE.md/rules, CLI prompt flags, output styles, hooks, subagents, settings layering, and why to avoid unofficial binary patching |
 | [`resources/documentation/choosing_claude_openai_models_and_effort.md`](resources/documentation/choosing_claude_openai_models_and_effort.md) | Rails developer's decision guide for picking Claude vs. OpenAI model tiers and reasoning-effort levels (mid-2026): exact model IDs and pricing, the `effort`/`reasoning_effort` knobs, caching/batch discounts, Ruby SDK snippets, and a tiered-routing framework |
+| [`resources/documentation/render_infrastructure_agent_playbook.md`](resources/documentation/render_infrastructure_agent_playbook.md) | Internal playbook for running Claude Code agents against Render: dedicated agent user and roles, a Claude Code permissions block, layered safety controls, escalation rules, audit trail, and Green/Yellow/Red use cases |
 | [`resources/mcp/guides/securing_local_MCP_servers_with_docker.md`](resources/mcp/guides/securing_local_MCP_servers_with_docker.md) | Security guide for running MCP servers in Docker: NGinx proxy, NGrok, and Pinggy tunnel approaches with step-by-step setup |
 
 ---
