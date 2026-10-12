@@ -55,6 +55,8 @@ python3 codex/scripts/audit_transposition.py claude codex
 claude plugin validate . --strict && claude plugin validate ./plugins/ai-bank --strict
 ```
 
+Skill scripts have no test runner of their own. `server/tests/test_render_remediate.py` loads `claude/skills/render-operations/scripts/render_remediate.py` by path (with `sys.dont_write_bytecode`), so it runs in the server suite and CI. Never leave `__pycache__` under `claude/skills`, because `validate_all_skills.py` rejects it.
+
 Docker builds must use the **repo root** as the build context because the image bundles `claude/` and `codex/`: `docker build -f server/Dockerfile -t aibank-mcp .`
 
 ## Server architecture (`server/src/`)

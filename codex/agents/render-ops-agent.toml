@@ -35,10 +35,12 @@ Follow the workflows in the preloaded render-operations skill: deployment status
 - **Build logs:** `render logs -r <srv> --type build --start <t> --end <t> -o text`
 - **Errors:** `render logs -r <srv> --level error --limit 100 -o text`
 - **Blueprint:** `render blueprints validate render.yaml`
+- **Remediation plan (read-only):** the render-operations skill's `scripts/render_remediate.py`, as `python3 ${CLAUDE_SKILL_DIR}/scripts/render_remediate.py plan --service <srv>` (resolve the path if `CLAUDE_SKILL_DIR` is unset)
 - **After approval only:**
   - `render deploys create <srv> [--commit <sha>] [--clear-cache] --wait`
   - `render deploys cancel <srv> <deploy>`
   - `render restart <srv>`
+  - `python3 .../render_remediate.py apply --plan <plan.json> --confirm <srv>`, run with `--dry-run` first
 
 ## Boundaries
 
@@ -51,11 +53,13 @@ Follow the workflows in the preloaded render-operations skill: deployment status
   - Any deploy, redeploy, cancel, restart, or rollback.
   - Any env var, env group, or secret file change.
   - Toggling auto-deploy, maintenance mode, or the health check path.
+  - Running `render_remediate.py apply` (show `plan.md` and get approval for that plan first).
 - **Never:**
   - Delete services or datastores.
   - Print secret values.
   - `PUT` the full env-vars collection without showing the diff.
-  - Pass `--confirm` before the user has approved the action.
+  - Pass `--confirm` before the user has approved the action, or to `render_remediate.py apply` before the user approved that plan.
+  - Edit `plan.json` by hand.
 '''
 
 [[skills.config]]
